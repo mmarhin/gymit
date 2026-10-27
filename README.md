@@ -83,17 +83,22 @@ Gymit es el carné digital del gimnasio: para entrar, el socio enseña en el tor
 
 ## Reconocimiento de una aplicación real (apartado 5.4)
 
-**Aplicación analizada:** _TODO: nombre_ · **Paquete:** `_TODO_` · **Versión:** _TODO_
+**Aplicación analizada:** Technogym · **Paquete:** `com.technogym.tgapp` · **Versión:** 3.45.5 (versionCode 3436).
+Se extrajo con `adb pull` de un Pixel 9 Pro con Android 17, el 27/10/2026.
+
+Es la app de gimnasio más cercana a Gymit que teníamos instalada. Su flujo de QR va al revés que el nuestro: el móvil escanea el código de la máquina, mientras que en Gymit es el torno el que lee el QR del móvil.
 
 | Qué mirar | Con qué | Observación |
 |---|---|---|
-| Permisos declarados | `aapt2 dump permissions` | _TODO_ |
-| Componentes exportados | `apktool` + lectura del manifiesto | _TODO_ |
-| Esquemas de firma | `apksigner verify --print-certs -v` | _TODO_ |
-| `minSdk` y `targetSdk` | `aapt2 dump badging` | _TODO_ |
-| Número de piezas instaladas | `adb shell pm path` | _TODO: número y sufijo de cada split_ |
+| Permisos declarados | `aapt2 dump permissions` | **63 permisos solicitados** (`uses-permission`), y además define dos propios. Entre ellos hay varios peligrosos: `CAMERA`, `RECORD_AUDIO`, `ACCESS_FINE_LOCATION` y `ACCESS_BACKGROUND_LOCATION`, `READ_PHONE_STATE`, `READ_CALENDAR` / `WRITE_CALENDAR`, `READ_EXTERNAL_STORAGE`, `BLUETOOTH_SCAN` / `BLUETOOTH_CONNECT` y diez de Health Connect (`health.READ_*`). También declara `AD_ID` y `ACCESS_ADSERVICES_*` para publicidad, y 15 permisos de insignias de lanzadores de otros fabricantes (Samsung, Huawei, HTC, Sony…), que vienen de una librería. |
+| Componentes exportados | `aapt2 dump xmltree` sobre el manifiesto (equivale a `apktool`) | Tiene **13 componentes exportados** de 64 (2 activities, 1 alias, 4 servicios y 6 receivers). **6 no exigen ningún permiso**: `MainActivity`, con deep links `https` hacia `tgapp-link.mywellness.com`, `www.technogym.com` y `tgapp.onelink.me` más los esquemas propios `tgapp://`, `tgapplink://` y `tgappthirdparties://`; `HealthConnectPermissionsRationaleActivity`; `AudioService` y `MediaButtonReceiver`; `HealthDataSdkService`; y `no.nordicsemi…PendingIntentReceiver` (escaneo BLE). `allowBackup=false`. |
+| Esquemas de firma | `apksigner verify --print-certs -v` | Solo está verificada la **firma v3**, más una SourceStamp de Google Play. El certificado es de Technogym S.p.A. con una clave **RSA de 1024 bits**, por debajo de los 2048 bits que se recomiendan hoy. |
+| `minSdk` y `targetSdk` | `aapt2 dump badging` | `minSdk` 29 (Android 10), `targetSdk` 36 (Android 16) y `compileSdk` 36. |
+| Número de piezas instaladas | `adb shell pm path` | **5 piezas** (App Bundle): `base.apk`, `split_config.arm64_v8a.apk` (librerías nativas), `split_config.en.apk` y `split_config.es.apk` (idiomas) y `split_config.xxhdpi.apk` (densidad de pantalla). |
 
 **Notas para el cuaderno del equipo**
 
-- ¿Pide algún permiso que no se pueda justificar por lo que hace la app? _TODO_
-- ¿Cuántos componentes tiene exportados y cuáles parecen innecesarios? _TODO_
+- **Permisos difíciles de justificar** por lo que hace la app: `READ_PHONE_STATE`, `RECORD_AUDIO`, la ubicación en segundo plano, el calendario y los identificadores de publicidad. `CAMERA` sí se justifica, porque sirve para escanear el QR de las máquinas (la app incluye `libbarhopper_v3.so`, de ML Kit). Bluetooth también, porque se conecta con los equipos.
+- **Componentes exportados:** 13, y 6 sin permiso. La mayoría vienen de librerías (Flutter, `audio_service`, Health Connect, WorkManager, Firebase), lo que confirma lo que vimos en el paso 9: el manifiesto final incluye mucho que el equipo no escribió. El más dudoso es el `PendingIntentReceiver` de Nordic, que está exportado sin permiso. Lo segundo que más superficie abre son los deep links de `MainActivity`.
+- **Para la auditoría:** está escrita en **Flutter**. La lógica va compilada en `libapp.so` (Dart AOT), así que jadx solo muestra el envoltorio Java. Además incluye `libtoolChecker.so` (RootBeer), es decir, **detección de root**, como la que tenemos prevista para Gymit.
+- **Lo que no repetiremos en Gymit:** firmar con una clave de 1024 bits, pedir permisos que no usamos y exportar componentes sin permiso.
