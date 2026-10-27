@@ -59,14 +59,9 @@ Gymit es el carné digital del gimnasio: para entrar, el socio enseña en el tor
 
 ### Entorno de construcción
 
-- Kotlin + Jetpack Compose, scripts de Gradle en Kotlin DSL y versiones centralizadas en `gradle/libs.versions.toml`.
+- Kotlin + Jetpack Compose, scripts de Gradle en Kotlin DSL y versiones centralizadas en `gradle/libs.versions.toml`. Room se compila con KSP 2.3.12; desde la serie 2.3 la versión de KSP ya no lleva delante el número de Kotlin.
 - Gradle Wrapper 9.8.2 fijado con `distributionSha256Sum`, de modo que la distribución descargada se verifica contra su hash oficial. Construid siempre con `./gradlew` (o `.\gradlew.bat` en Windows), nunca con un Gradle del sistema.
 - Para ejecutar Gradle hace falta un JDK 17 o superior. El de Android Studio sirve.
-
-```bash
-./gradlew assembleDebug      # app/build/outputs/apk/debug/app-debug.apk
-./gradlew assembleRelease    # app/build/outputs/apk/release/app-release-unsigned.apk
-```
 
 ### Ramas y revisión
 
@@ -80,6 +75,40 @@ Gymit es el carné digital del gimnasio: para entrar, el socio enseña en el tor
 - **Nunca** se suben al repositorio almacenes de claves (`*.jks`, `*.keystore`), contraseñas, `local.properties` ni claves de API, tampoco en un commit que después se revierta, porque el histórico conserva todo. El `.gitignore` ya los excluye.
 - Si un secreto llega al repositorio por error, se considera comprometido: se rota y se avisa al equipo.
 - La configuración de firma de la variante de publicación se leerá de un fichero local fuera de control de versiones (Bloque III).
+
+## Cómo compilar y ejecutar
+
+1. **Clonar y compilar.** Al abrir el proyecto, Android Studio crea `local.properties` con la ruta del SDK. Por línea de órdenes:
+
+   ```bash
+   git clone git@github.com:mmarhin/gymit.git && cd gymit
+   ./gradlew assembleDebug      # app/build/outputs/apk/debug/app-debug.apk
+   ```
+
+2. **Arrancar el backend de la asignatura.** No está en este repositorio: es el material común del campus virtual (`Material comun backend y proyecto base.zip`, carpeta `backend/`), y los usuarios de prueba están en su `LEEME.md`.
+
+   ```bash
+   python3 servidor.py          # o: java Servidor.java
+   curl http://localhost:8080/api/salud
+   ```
+
+3. **Llevar el puerto del backend al dispositivo y ejecutar.** La app apunta a `http://localhost:8080/` (`ClienteRed.BASE_URL`) y el puerto se reenvía por adb. Funciona igual en emulador que en un móvil por USB, sin depender de la IP del ordenador ni del cortafuegos:
+
+   ```bash
+   adb reverse tcp:8080 tcp:8080    # repetir tras reiniciar el emulador o adb
+   ./gradlew installDebug
+   ```
+
+> **Antes de la P3.2** hay que deshacer este atajo: volver a `http://10.0.2.2:8080/` en el emulador, o a la IP del ordenador en un móvil físico. Los proxys excluyen `localhost`, así que con este atajo no verían el tráfico. También se quitará `android:usesCleartextTraffic="true"` del manifiesto, que hoy está a propósito.
+
+## Qué hay en la app (cierre del Bloque II)
+
+- Inicio de sesión, listado «Mis entradas» con copia local en Room y detalle de cada entrada. El modelo del backend común (`Elemento`) se llama aquí `Entrada`; el JSON se mapea con `@SerialName`.
+- Cierre de sesión que borra la copia local del usuario antes de vaciar la sesión (corrección de la P2.2, sección 5.6).
+- Enlace profundo `gymit://entrada/{id}`, permiso `CAMERA` pedido solo cuando se necesita, y `FLAG_SECURE` en la ventana.
+- **Deliberadamente insegura** hasta el Bloque III: token en claro en `shared_prefs`, base de datos sin cifrar, registros con datos sensibles y tráfico HTTP.
+
+El inventario de datos sensibles, la superficie expuesta, el modelo de amenazas y el reparto están en **[docs/ALCANCE.md](docs/ALCANCE.md)**, el documento de alcance del Bloque II. El estado entregado se marca con el tag `bloque-2`.
 
 ## Reconocimiento de una aplicación real (apartado 5.4)
 
