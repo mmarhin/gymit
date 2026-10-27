@@ -1,0 +1,45 @@
+# Gradle / build
+.gradle/
+build/
+**/build/
+.kotlin/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+output-metadata.json
+
+# Configuración local (ruta del SDK, claves de API, etc.)
+local.properties
+*.env
+.env*
+
+# Almacenes de claves y material de firma: NUNCA al repositorio
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+keystore.properties
+signing.properties
+google-services.json
+
+# Android Studio / IntelliJ
+*.iml
+.idea/
+.navigation/
+
+# Salidas de análisis de las prácticas (jadx, apktool, APKs extraídos)
+tools/
+salida/
+decodificado/
+decod_*/
+contenido/
+recon/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
