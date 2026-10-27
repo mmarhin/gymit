@@ -7,15 +7,16 @@ Aplicación Android que se construye en el Bloque II, se protege en el Bloque II
 
 | | |
 |---|---|
-| **Grupo** | _TODO: letra del grupo_ |
-| **Nombre del equipo** | _TODO_ |
-| **Dominio asignado** | _TODO: Bóveda / Fichaje / Cartera / Salud / Enlace / Acceso / Reparto_ |
+| **Grupo** | K |
+| **Nombre del equipo** | GymIt |
+| **Dominio asignado** | Acceso |
 
 | Miembro | Usuario de GitHub |
 |---|---|
-| _TODO_ | _TODO_ |
-| _TODO_ | _TODO_ |
-| _TODO_ | _TODO_ |
+| Alberto Bartolomé Iruela | alman368 |
+| Mario Marín Hinojosa | mmarhin |
+| Iván Mora Gómez | ivanmora17 |
+| Alberto Neumann García | albertng31 |
 
 ## Descripción de la aplicación
 
@@ -27,10 +28,10 @@ _TODO (2–3 frases): qué hace exactamente la aplicación dentro del dominio as
 
 | Requisito | Cómo lo cumple Gymit | Responsable |
 |---|---|---|
-| Autenticación de usuario | _TODO_ | _TODO_ |
-| Almacenamiento local de datos sensibles | _TODO_ | _TODO_ |
-| Llamada a una API remota | _TODO_ | _TODO_ |
-| Permiso peligroso justificado | _TODO: permiso y por qué lo necesita el dominio_ | _TODO_ |
+| Autenticación de usuario | _TODO_ | Iván Mora |
+| Almacenamiento local de datos sensibles | _TODO_ | Alberto Bartolomé |
+| Llamada a una API remota | _TODO_ | Mario Marín |
+| Permiso peligroso justificado | _TODO: permiso y por qué lo necesita el dominio_ | Alberto Neumann |
 
 ## Convenciones del equipo
 
