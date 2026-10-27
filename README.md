@@ -9,7 +9,7 @@ Aplicación Android que se construye en el Bloque II, se protege en el Bloque II
 |---|---|
 | **Grupo** | K |
 | **Nombre del equipo** | GymIt |
-| **Dominio asignado** | Acceso |
+| **Dominio** | Acceso (elegido por el equipo) |
 
 | Miembro | Usuario de GitHub |
 |---|---|
@@ -20,18 +20,27 @@ Aplicación Android que se construye en el Bloque II, se protege en el Bloque II
 
 ## Descripción de la aplicación
 
-_TODO (2–3 frases): qué hace exactamente la aplicación dentro del dominio asignado._
+Gymit es el carné digital del gimnasio: para entrar, el socio enseña en el torno un código QR firmado que cambia cada 30 segundos y que solo se genera en el móvil vinculado a su cuenta. El servidor comprueba la firma, la caducidad y que el código no se haya usado antes, y concede o deniega el acceso. La app incluye también el alta del socio con un selfie en directo y el historial de sus entradas.
 
-**Dato más sensible:** _TODO: el dato concreto que más daño haría si se filtrara. Es el punto de partida del modelo de amenazas del Bloque III._
+**Dato más sensible:** la credencial de acceso, es decir, la clave privada con la que el móvil firma los QR. Quien la obtenga puede generar QR válidos y entrar en el gimnasio haciéndose pasar por el socio. Por eso se genera en el Android Keystore y no sale nunca del dispositivo.
 
 ## Requisitos técnicos mínimos
 
 | Requisito | Cómo lo cumple Gymit | Responsable |
 |---|---|---|
-| Autenticación de usuario | _TODO_ | Iván Mora |
-| Almacenamiento local de datos sensibles | _TODO_ | Alberto Bartolomé |
-| Llamada a una API remota | _TODO_ | Mario Marín |
-| Permiso peligroso justificado | _TODO: permiso y por qué lo necesita el dominio_ | Alberto Neumann |
+| Autenticación de usuario | Login con correo y contraseña contra Supabase Auth, y huella (BiometricPrompt) para desbloquear el pase. La cuenta queda vinculada a un único móvil: el que registró su clave pública al darse de alta. | Iván Mora |
+| Almacenamiento local de datos sensibles | La clave privada de firma vive en el Android Keystore, no exportable y ligada a la autenticación biométrica. El perfil, el selfie y el historial de accesos se guardan cifrados en el almacenamiento privado de la app. | Alberto Bartolomé |
+| Llamada a una API remota | Supabase: Auth para la sesión, PostgreSQL con Row Level Security para que cada socio solo vea sus datos, y una Edge Function que valida el QR en el torno (firma, caducidad y nonce de un solo uso). | Mario Marín |
+| Permiso peligroso justificado | `CAMERA`, usada con CameraX para hacer el selfie en directo durante el alta. Permite comprobar en el torno que quien entra es el titular, y no se acepta una foto subida desde la galería. | Alberto Neumann |
+
+### Diseño de seguridad previsto
+
+- **QR firmado:** contiene el usuario, la hora, un nonce y la firma. El servidor rechaza los QR caducados (más de 30 s) y los nonces ya usados.
+- **Vinculación al dispositivo:** Key Attestation al darse de alta, para que la clave pública que se registra corresponda a una clave en hardware de ese móvil.
+- **Endurecimiento:** `FLAG_SECURE` en la pantalla del pase, certificate pinning hacia Supabase, R8, detección de root y `allowBackup=false`.
+- Play Integrity queda descartado porque exige publicar en Play Console.
+
+**Pantallas:** login, alta con selfie, pase con el QR y cuenta atrás, e historial. El torno es una app aparte (o una web) que lee el QR y muestra verde o rojo.
 
 ## Convenciones del equipo
 
@@ -40,13 +49,13 @@ _TODO (2–3 frases): qué hace exactamente la aplicación dentro del dominio as
 | Decisión | Valor |
 |---|---|
 | Nombre de paquete (`applicationId` y `namespace`) | `es.uma.seguridad.gymit` |
-| `minSdk` | 26 (Android 8.0) |
+| `minSdk` | 30 (Android 11) |
 | `targetSdk` | 37 (Android 17) |
 | `compileSdk` | 37 |
 
 **Justificación del `targetSdk`.** Declaramos la API 37 porque es la versión estable más reciente de Android. Con ella el sistema aplica a la aplicación todas las restricciones de seguridad y privacidad vigentes, porque muchas sólo se activan si la app las declara como objetivo. Además supera el mínimo que Google Play exige hoy a las aplicaciones nuevas (API 36). Un `targetSdk` más bajo dejaría activos comportamientos heredados que en una auditoría contarían como hallazgo.
 
-**Justificación del `minSdk`.** La API 26 cubre prácticamente todo el parque de dispositivos en uso y es la mínima que proponen las plantillas actuales de Android Studio. Permite usar iconos adaptativos y APIs criptográficas modernas sin arrastrar código de compatibilidad.
+**Justificación del `minSdk`.** La API 30 es la primera que ofrece de forma uniforme lo que necesita la credencial de acceso: claves del Keystore ligadas a la autenticación biométrica fuerte (`setUserAuthenticationParameters` con `BIOMETRIC_STRONG`), Key Attestation fiable para demostrar al servidor que la clave está en hardware, y permisos de cámara de un solo uso. Bajar de 30 obligaría a mantener rutas de compatibilidad con garantías más débiles justo en la parte crítica de la app, y Android 11 o superior cubre la gran mayoría de los móviles en uso.
 
 ### Entorno de construcción
 
