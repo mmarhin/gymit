@@ -63,18 +63,22 @@ fun PantallaPerfil(
         ) {
             // Toda la foto es el botón (112 dp, muy por encima de los 48 dp mínimos);
             // la cámara de la esquina sólo indica que se puede cambiar
-            Box(
-                contentAlignment = Alignment.BottomEnd,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .clickable(onClickLabel = "Cambiar la foto", onClick = onRehacerSelfie)
-            ) {
-                AvatarSocio(selfie = selfie, nombre = nombre, tamano = 112.dp)
+            // Sólo la foto se recorta en círculo: la cámara sobresale por la esquina y no debe cortarse
+            Box(contentAlignment = Alignment.BottomEnd) {
+                AvatarSocio(
+                    selfie = selfie,
+                    nombre = nombre,
+                    tamano = 112.dp,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable(onClickLabel = "Cambiar la foto", onClick = onRehacerSelfie)
+                )
                 Box(
                     Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary),
+                        .background(MaterialTheme.colorScheme.primary)
+                        .clickable(onClickLabel = "Cambiar la foto", onClick = onRehacerSelfie),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
