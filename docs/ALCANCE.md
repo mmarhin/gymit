@@ -11,7 +11,7 @@ Este documento describe la aplicación tal como queda al cerrar el Bloque II. Co
 
 **Para qué sirve.** Gymit es el carné digital de un gimnasio. Para pasar el torno, el socio enseña en su móvil un código QR firmado que cambia cada 30 segundos y que solo se puede generar en el móvil vinculado a su cuenta. El servidor comprueba la firma, que el código no haya caducado y que no se haya usado antes, y concede o deniega la entrada. La app incluye además el alta del socio con un selfie hecho en directo y el historial de sus entradas.
 
-**Quién la usa.** La usan los socios del gimnasio. El personal de recepción, o el propio torno, usa otra aplicación aparte que lee el QR y muestra verde o rojo.
+**Quién la usa.** La usan los socios del gimnasio. El personal usa otra aplicación aparte, la del torno (módulo `torno`), que lee el QR con la cámara y muestra verde o rojo.
 
 **Estado al cerrar el Bloque II.** La aplicación funciona contra el backend común de la asignatura y tiene:
 - inicio de sesión, y entrada directa al pase si ya hay sesión guardada;
@@ -40,6 +40,7 @@ Las tres primeras columnas describen la situación **hoy** y están medidas en A
 | Contenido del pase QR (`gymit:v1:<usuario>:<emitido>:<nonce>`) | Se genera en memoria cada 30 s (`GeneradorPase`); se ve en la pantalla del pase | Cualquiera que vea el QR. Y como **no lleva firma**, cualquiera que conozca el formato puede fabricar uno válido para otro socio | Firma con la clave del Keystore; el servidor comprueba firma, caducidad y nonce de un solo uso |
 | Selfie del alta | `files/selfie/<usuario>.jpg`, JPEG sin cifrar en el almacenamiento privado (nunca en la galería). Se borra al cerrar sesión | Cualquiera con adb y depuración (`run-as`), y las copias de seguridad | Cifrado con clave del Keystore; subido por TLS; `allowBackup=false` |
 | Dirección del backend | Escrita en el APK (`ClienteRed.BASE_URL`) | Cualquiera que decompile el APK | No es secreta. Nunca se meterán claves en el código |
+| Token de la cuenta de personal (app del torno) | `shared_prefs/sesion_torno.xml` del torno, en claro | Cualquiera con adb y depuración en el móvil del torno | Como la sesión del socio; la decisión de abrir pasa al servidor |
 
 ## 3. Superficie expuesta
 
@@ -55,6 +56,7 @@ Las tres primeras columnas describen la situación **hoy** y están medidas en A
 | Registros | `adb logcat` | Nada: token, credenciales y cuerpos de respuesta en claro | Sesión 3.6 |
 | Vista de recientes y capturas | Botón de recientes del sistema, capturas de pantalla | `FLAG_SECURE` activo: miniatura en blanco y captura en negro | Sesión 3.6 |
 | Permiso `CAMERA` | Diálogo del sistema, pedido solo al pulsar «Hacerme el selfie» en el alta o desde el perfil | Si se deniega, se puede seguir sin selfie («Ahora no») y el resto de la app funciona; tras dos negativas Android deja de preguntar y la app ofrece abrir los ajustes | Bloque III (cifrado del selfie) |
+| App del torno | `adb shell am start -n es.uma.seguridad.gymit.torno/.MainActivity`; lee cualquier QR que se le enseñe | Formato, caducidad y uso único del pase, pero no su autenticidad (no hay firma). La cuenta de personal solo se comprueba en la propia app | Bloque III (firma y validación en el servidor) |
 
 ## 4. Modelo de amenazas preliminar
 
