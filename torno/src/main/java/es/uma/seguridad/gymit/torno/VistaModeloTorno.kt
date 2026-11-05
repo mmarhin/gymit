@@ -87,7 +87,14 @@ class VistaModeloTorno(private val repositorio: RepositorioTorno) : ViewModel() 
 
         val veredicto = validador.validar(texto)
         _lectura.value = Lectura(veredicto, ahora)
-        viewModelScope.launch { repositorio.registrar(veredicto) }
+        viewModelScope.launch {
+            if (!repositorio.registrar(veredicto)) {
+                ocultar?.cancel()
+                _lectura.value = null
+                _acceso.value = EstadoAcceso(error = "La sesión del torno ha caducado. Vuelve a entrar.")
+                _pantalla.value = Pantalla.Acceso
+            }
+        }
         ocultar?.cancel()
         ocultar = viewModelScope.launch {
             delay(VERDICTO_EN_PANTALLA_MS)

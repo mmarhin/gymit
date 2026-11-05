@@ -76,9 +76,14 @@ class RepositorioTorno(contexto: Context, private val api: ApiTorno = ClienteRed
         }
     }
 
-    /** Apunta un acceso en el registro del torno. Si falla la red, el torno sigue funcionando. */
-    suspend fun registrar(veredicto: Veredicto) = withContext(Dispatchers.IO) {
-        val token = token ?: return@withContext
+    /**
+     * Apunta un acceso en el registro del torno. Si falla la red, el torno
+     * sigue funcionando. Devuelve false si el servidor ha rechazado la sesión
+     * (por ejemplo, porque se ha reiniciado): entonces se cierra la sesión del
+     * torno para que el personal vuelva a entrar y los accesos no se pierdan.
+     */
+    suspend fun registrar(veredicto: Veredicto): Boolean = withContext(Dispatchers.IO) {
+        val token = token ?: return@withContext false
         val hora = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
         val acceso = when (veredicto) {
             is Veredicto.Concedido -> NuevoAcceso("Acceso concedido · ${veredicto.nombre}", "${veredicto.usuario} · $hora")
@@ -87,7 +92,17 @@ class RepositorioTorno(contexto: Context, private val api: ApiTorno = ClienteRed
                 "${veredicto.usuario ?: "desconocido"} · $hora"
             )
         }
-        runCatching { api.registrar("Bearer $token", acceso) }
+        try {
+            api.registrar("Bearer $token", acceso)
+            true
+        } catch (e: HttpException) {
+            if (e.code() == 401) {
+                salir()
+                false
+            } else true
+        } catch (e: Exception) {
+            true
+        }
     }
 
     suspend fun registro(): Resultado<List<Acceso>> = withContext(Dispatchers.IO) {

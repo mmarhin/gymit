@@ -113,7 +113,11 @@ private fun Desplazable(contenido: @Composable () -> Unit) {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ListaEntradas(historial: Historial, onAbrir: (Int) -> Unit) {
-    val porMes = remember(historial.entradas) { historial.entradas.groupBy { it.fecha.take(7) } }
+    // Lo más reciente arriba, venga del servidor (que las manda de la más antigua a la más
+    // nueva) o de la copia local (que Room ya ordena al revés)
+    val porMes = remember(historial.entradas) {
+        historial.entradas.sortedByDescending { it.fecha }.groupBy { it.fecha.take(7) }
+    }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 20.dp)

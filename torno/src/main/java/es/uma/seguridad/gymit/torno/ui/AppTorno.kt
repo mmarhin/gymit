@@ -386,13 +386,13 @@ private fun PantallaVeredicto(lectura: Lectura, onCerrar: () -> Unit) {
         Spacer(Modifier.height(24.dp))
         when (val v = lectura.veredicto) {
             is Veredicto.Concedido -> {
-                Text("Adelante", color = texto, fontSize = 56.sp, fontWeight = FontWeight.Bold)
+                Text("Adelante", color = texto, style = MaterialTheme.typography.displayLarge)
                 Spacer(Modifier.height(8.dp))
                 Text(v.nombre, color = texto, style = MaterialTheme.typography.headlineMedium)
                 UsuarioVeredicto(v.usuario, texto)
             }
             is Veredicto.Denegado -> {
-                Text("Acceso denegado", color = texto, fontSize = 44.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                Text("Acceso denegado", color = texto, style = MaterialTheme.typography.displayMedium, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(12.dp))
                 Text(v.motivo.texto, color = texto, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
                 if (v.usuario != null) {
