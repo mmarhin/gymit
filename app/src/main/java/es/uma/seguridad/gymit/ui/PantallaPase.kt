@@ -135,17 +135,22 @@ private fun TarjetaPase(pase: Pase?, onAmpliar: () -> Unit, modifier: Modifier =
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // QR dentro del visor del logo
+            /*
+             * El QR va limpio sobre blanco y con todo el ancho de la tarjeta,
+             * como en los pases de verdad. El visor del logo se reserva para
+             * lo que escanea (el torno y la cámara del selfie), no para lo
+             * que se escanea; además, un QR más grande se lee antes.
+             * El margen blanco interior es la «zona tranquila» que el lector
+             * necesita alrededor del código.
+             */
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.9f)
+                    .fillMaxWidth()
                     .aspectRatio(1f)
-                    .marcoEscaneo(colores.onMarca, grosor = 6.dp, largo = 34.dp, radio = 16.dp)
-                    .padding(18.dp)
-                    .clip(MaterialTheme.shapes.medium)
+                    .clip(MaterialTheme.shapes.large)
                     .background(colores.qrFondo)
                     .clickable(enabled = pase != null, onClickLabel = "Ampliar el código", onClick = onAmpliar)
-                    .padding(14.dp),
+                    .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
                 if (pase != null) {

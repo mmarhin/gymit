@@ -99,7 +99,7 @@ fun PantallaPerfil(
 
         Spacer(Modifier.height(16.dp))
 
-        Seccion("Datos personales") {
+        Seccion("Datos personales", nota = "Para cambiar tus datos, pásate por recepción.") {
             when (estado) {
                 is EstadoUi.Reposo, is EstadoUi.Cargando -> repeat(3) { indice ->
                     if (indice > 0) Separador()
@@ -157,7 +157,7 @@ fun PantallaPerfil(
 }
 
 @Composable
-private fun Seccion(titulo: String, contenido: @Composable ColumnScope.() -> Unit) {
+private fun Seccion(titulo: String, nota: String? = null, contenido: @Composable ColumnScope.() -> Unit) {
     Text(
         titulo,
         style = MaterialTheme.typography.titleSmall,
@@ -170,9 +170,17 @@ private fun Seccion(titulo: String, contenido: @Composable ColumnScope.() -> Uni
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
-            .padding(bottom = 16.dp)
+            .padding(bottom = if (nota != null) 8.dp else 16.dp)
     ) {
         Column(Modifier.padding(vertical = 6.dp), content = contenido)
+    }
+    if (nota != null) {
+        Text(
+            nota,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 28.dp, end = 28.dp, bottom = 16.dp)
+        )
     }
 }
 
