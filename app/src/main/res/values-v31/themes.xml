@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Android 12+: pantalla de arranque del sistema con el logo sobre el índigo de la marca -->
+    <style name="Theme.Gymit" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/gymit_indigo</item>
+        <item name="android:windowSplashScreenBackground">@color/gymit_indigo</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+    </style>
+</resources>
