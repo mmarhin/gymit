@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Paleta del logo de Gymit. Los mismos valores están en ui/theme/Color.kt para Compose. Los usan el icono y la pantalla de arranque de las dos apps -->
+    <color name="gymit_indigo">#FF4949DD</color>
+    <color name="gymit_menta">#FF69F2AF</color>
+    <!-- Fondo del icono del torno (Neutro 6), para distinguirlo del de la app del socio -->
+    <color name="gymit_noche">#FF111319</color>
+</resources>

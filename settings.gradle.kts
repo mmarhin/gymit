@@ -21,3 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "Gymit"
 include(":app")
+include(":comun")
+include(":torno")

@@ -118,7 +118,9 @@ private val EsquemaOscuro = darkColorScheme(
  *   encima del fondo en oscuro.
  * @property acceso Acceso concedido (pantalla verde del torno, «Activo»).
  * @property accesoTexto «Acceso concedido» escrito sobre el fondo normal.
- * @property denegado Acceso denegado (pantalla roja del torno).
+ * @property denegado Acceso denegado (pantalla roja del torno). Igual en los dos
+ *   modos, como `acceso`: es un fondo a pantalla completa y tiene que leerse
+ *   como «rojo» también con el tema oscuro, que es el que usa el torno.
  * @property aviso Icono de aviso, por ejemplo el pase a punto de caducar.
  */
 @Immutable
@@ -163,8 +165,6 @@ private val ColoresClaros = ColoresGymit(
 private val ColoresOscuros = ColoresClaros.copy(
     tarjeta = Neutro[12],
     accesoTexto = Menta[80],
-    denegado = Rojo[80],
-    onDenegado = Rojo[20],
     denegadoContenedor = Rojo[30],
     onDenegadoContenedor = Rojo[90],
     aviso = Ambar[80],

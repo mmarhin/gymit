@@ -102,7 +102,7 @@ data class Pase(
     val segundosRestantes: Int
 )
 
-const val VIGENCIA_PASE_SEGUNDOS = 30
+const val VIGENCIA_PASE_SEGUNDOS = es.uma.seguridad.gymit.pase.FormatoPase.VIGENCIA_SEGUNDOS
 
 /**
  * El selfie del alta: dónde está el fichero y una versión que cambia cada vez

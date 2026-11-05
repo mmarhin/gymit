@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Android 12+: pantalla de arranque con el logo sobre fondo noche -->
+    <style name="Theme.GymitTorno" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/gymit_noche</item>
+        <item name="android:windowSplashScreenBackground">@color/gymit_noche</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+    </style>
+</resources>

@@ -2,12 +2,16 @@ package es.uma.seguridad.gymit.datos
 
 import es.uma.seguridad.gymit.modelo.Pase
 import es.uma.seguridad.gymit.modelo.VIGENCIA_PASE_SEGUNDOS
+import es.uma.seguridad.gymit.pase.ContenidoPase
+import es.uma.seguridad.gymit.pase.FormatoPase
 import java.security.SecureRandom
 
 /* ==========================================================================
    EL PASE DE ACCESO
 
-   Genera el texto que va dentro del QR que el socio enseña en el torno:
+   Genera el texto que va dentro del QR que el socio enseña en el torno. El
+   formato está en el módulo :comun (pase/FormatoPase.kt), porque lo comparte
+   con la app del torno, que es quien lo lee:
 
        gymit:v1:<usuario>:<emitido>:<nonce>
 
@@ -42,7 +46,7 @@ class GeneradorPase(private val aleatorio: SecureRandom = SecureRandom()) {
         }
         val emitido = periodo * VIGENCIA_PASE_SEGUNDOS
         return Pase(
-            contenido = "gymit:v1:$usuario:$emitido:$nonceActual",
+            contenido = FormatoPase.componer(ContenidoPase(usuario, emitido, nonceActual)),
             emitido = emitido,
             segundosRestantes = (emitido + VIGENCIA_PASE_SEGUNDOS - segundos).toInt()
         )

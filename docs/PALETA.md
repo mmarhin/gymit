@@ -74,8 +74,8 @@ Material 3 no tiene papeles para «acceso concedido» o «denegado», así que s
 | `acceso` | `#69F2AF` | `#69F2AF` | Pantalla verde del torno, etiqueta «Activo» |
 | `onAcceso` | `#002111` | `#002111` | Texto sobre acceso |
 | `accesoTexto` | `#006D44` | `#53DE9D` | «Acceso concedido» escrito sobre el fondo normal |
-| `denegado` | `#BA172A` | `#FFB4AF` | Pantalla roja del torno |
-| `onDenegado` | `#FFFFFF` | `#680010` | Texto sobre denegado |
+| `denegado` | `#BA172A` | `#BA172A` | Pantalla roja del torno. Igual en los dos modos: es un fondo a pantalla completa y en oscuro tiene que seguir leyéndose como rojo |
+| `onDenegado` | `#FFFFFF` | `#FFFFFF` | Texto sobre denegado |
 | `aviso` | `#845500` | `#FFB959` | Icono de aviso |
 | `avisoContenedor` | `#FFDDB4` | `#643F00` | Caja de aviso |
 | `onAvisoContenedor` | `#462B00` | `#FFDDB4` | Texto en la caja de aviso |
@@ -113,7 +113,7 @@ Contraste calculado con la fórmula de WCAG 2.2 (luminancia relativa). Mínimos:
 | Menta sobre el pase | `marcaAcento` / `marca` | 4,5:1 | 4,55:1 | 4,55:1 |
 | Torno: acceso concedido | `onAcceso` / `acceso` | 7:1 | 12,17:1 | 12,17:1 |
 | «Acceso concedido» en texto | `accesoTexto` / `background` | 4,5:1 | 6,10:1 | 10,88:1 |
-| Torno: denegado | `onDenegado` / `denegado` | 4,5:1 | 6,47:1 | 7,77:1 |
+| Torno: denegado | `onDenegado` / `denegado` | 4,5:1 | 6,47:1 | 6,47:1 |
 | Icono de aviso | `aviso` / `background` | 3:1 | 6,08:1 | 10,91:1 |
 | Caja de aviso | `onAvisoContenedor` / `avisoContenedor` | 4,5:1 | 10,12:1 | 7,21:1 |
 | QR | `qrModulo` / `qrFondo` | 15:1 | 18,44:1 | 18,44:1 |

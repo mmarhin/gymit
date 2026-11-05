@@ -82,8 +82,11 @@ Gymit es el carné digital del gimnasio: para entrar, el socio enseña en el tor
 
    ```bash
    git clone git@github.com:mmarhin/gymit.git && cd gymit
-   ./gradlew assembleDebug      # app/build/outputs/apk/debug/app-debug.apk
+   ./gradlew assembleDebug      # app/build/outputs/apk/debug/app-debug.apk (socio)
+                                # torno/build/outputs/apk/debug/torno-debug.apk (torno)
    ```
+
+   El proyecto tiene tres módulos: `app` (la app del socio), `torno` (la del gimnasio, ver más abajo) y `comun`, con lo que comparten las dos: el formato del pase QR, el tema y la paleta, y el logo.
 
 2. **Arrancar el backend de la asignatura.** No está en este repositorio: es el material común del campus virtual (`Material comun backend y proyecto base.zip`, carpeta `backend/`), y los usuarios de prueba están en su `LEEME.md`.
 
@@ -96,7 +99,8 @@ Gymit es el carné digital del gimnasio: para entrar, el socio enseña en el tor
 
    ```bash
    adb reverse tcp:8080 tcp:8080    # repetir tras reiniciar el emulador o adb
-   ./gradlew installDebug
+   ./gradlew :app:installDebug      # sólo la app del socio
+   ./gradlew installDebug           # las dos apps, socio y torno
    ```
 
 > **Antes de la P3.2** hay que deshacer este atajo: volver a `http://10.0.2.2:8080/` en el emulador, o a la IP del ordenador en un móvil físico. Los proxys excluyen `localhost`, así que con este atajo no verían el tráfico. También se quitará `android:usesCleartextTraffic="true"` del manifiesto, que hoy está a propósito.
@@ -113,6 +117,25 @@ Gymit es el carné digital del gimnasio: para entrar, el socio enseña en el tor
 - **Deliberadamente insegura** hasta el Bloque III: token y selfie en claro, base de datos sin cifrar, QR sin firmar, registros con datos sensibles y tráfico HTTP.
 
 El inventario de datos sensibles, la superficie expuesta, el modelo de amenazas y el reparto están en **[docs/ALCANCE.md](docs/ALCANCE.md)**, el documento de alcance del Bloque II. El estado entregado se marca con el tag `bloque-2`.
+
+## El torno (para la presentación)
+
+El módulo `torno` es la app del gimnasio: lee el pase QR del socio con la cámara trasera y responde a pantalla completa **«Adelante»** en menta o **«Acceso denegado»** en rojo, con el motivo. Es una app aparte a propósito: el papel del gimnasio no debe ir dentro de la app que lleva el socio.
+
+- **Acceso del personal**: se entra con la cuenta `admin` del backend común (la contraseña está en su `LEEME.md`). Una cuenta de socio no puede abrir el torno.
+- **Comprobaciones** (`torno/.../datos/ValidadorPase.kt`, con pruebas en `ValidadorPaseTest`): que sea un pase de Gymit, que no tenga más de 30 s (con 5 s de margen por el desfase de reloj), que no se haya usado antes y que el socio exista (`GET /api/admin/usuarios`).
+- **Registro**: cada lectura, concedida o denegada, se apunta con `POST /api/elementos` y se consulta en la pantalla «Registro de accesos».
+
+**Cómo montar la demostración.** Hacen falta dos dispositivos: uno con la app del socio enseñando el pase y otro con el torno apuntándole con la cámara (por ejemplo, el móvil de un miembro del equipo y otro móvil, o un emulador con la webcam del portátil). Los dos tienen que llegar al backend: con `adb reverse tcp:8080 tcp:8080` en cada uno si van por USB.
+
+```bash
+./gradlew :torno:installDebug
+```
+
+**Limitaciones del Bloque II, a propósito:**
+- **El torno no puede comprobar que el pase es auténtico**: el QR no lleva firma, así que un pase fabricado a mano con el usuario de otro socio pasa (lo demuestra la prueba `sinFirmaUnPaseFabricadoPasa`). La firma con la clave del Keystore y su verificación son del Bloque III.
+- **El acceso queda en el registro del torno, no en el historial del socio**: `POST /api/elementos` guarda en la lista del dueño del token, el torno no tiene el del socio y el backend común no se modifica. El historial del socio con sus entradas reales llegará cuando la validación pase al servidor (Supabase, Bloque III).
+- La comprobación de que la cuenta es de personal se hace en el cliente: el backend común no distingue roles (hallazgo previsto para el Bloque IV).
 
 ## Reconocimiento de una aplicación real (apartado 5.4)
 
