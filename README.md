@@ -1,8 +1,5 @@
 # Gymit
 
-Proyecto de grupo de **Seguridad en Entornos Móviles** (Grado en Ciberseguridad e IA · ETSII · UMA).
-Aplicación Android que se construye en el Bloque II, se protege en el Bloque III y es auditada por otro grupo en el Bloque IV.
-
 ## Equipo
 
 | | |
@@ -20,9 +17,7 @@ Aplicación Android que se construye en el Bloque II, se protege en el Bloque II
 
 ## Descripción de la aplicación
 
-Gymit es el carné digital del gimnasio: para entrar, el socio enseña en el torno un código QR firmado que cambia cada 30 segundos y que solo se genera en el móvil vinculado a su cuenta. El servidor comprueba la firma, la caducidad y que el código no se haya usado antes, y concede o deniega el acceso. La app incluye también el alta del socio con un selfie en directo y el historial de sus entradas.
-
-**Dato más sensible:** la credencial de acceso, es decir, la clave privada con la que el móvil firma los QR. Quien la obtenga puede generar QR válidos y entrar en el gimnasio haciéndose pasar por el socio. Por eso se genera en el Android Keystore y no sale nunca del dispositivo.
+Gymit es el carné digital del gimnasio: para entrar, el socio enseña en el torno un código QR firmado que cambia cada 30 segundos y que solo se genera en el móvil vinculado a su cuenta, y el servidor comprueba la firma, la caducidad y que el código no se haya usado antes. La app incluye también el alta del socio con un selfie en directo y el historial de sus entradas. El dato más sensible es la credencial de acceso, la clave privada con la que el móvil firma los QR: quien la obtenga puede entrar en el gimnasio haciéndose pasar por el socio.
 
 ## Requisitos técnicos mínimos
 
@@ -33,116 +28,51 @@ Gymit es el carné digital del gimnasio: para entrar, el socio enseña en el tor
 | Llamada a una API remota | Supabase: Auth para la sesión, PostgreSQL con Row Level Security para que cada socio solo vea sus datos, y una Edge Function que valida el QR en el torno (firma, caducidad y nonce de un solo uso). | Mario Marín |
 | Permiso peligroso justificado | `CAMERA`, usada con CameraX para hacer el selfie en directo durante el alta. Permite comprobar en el torno que quien entra es el titular, y no se acepta una foto subida desde la galería. | Alberto Neumann |
 
-### Diseño de seguridad previsto
-
-- **QR firmado:** contiene el usuario, la hora, un nonce y la firma. El servidor rechaza los QR caducados (más de 30 s) y los nonces ya usados.
-- **Vinculación al dispositivo:** Key Attestation al darse de alta, para que la clave pública que se registra corresponda a una clave en hardware de ese móvil.
-- **Endurecimiento:** `FLAG_SECURE` en la pantalla del pase, certificate pinning hacia Supabase, R8, detección de root y `allowBackup=false`.
-- Play Integrity queda descartado porque exige publicar en Play Console.
-
-**Pantallas:** login, alta con selfie, pase con el QR y cuenta atrás, e historial. El torno es una app aparte (o una web) que lee el QR y muestra verde o rojo.
-
 ## Convenciones del equipo
-
-### Identidad y versiones del SDK
 
 | Decisión | Valor |
 |---|---|
-| Nombre de paquete (`applicationId` y `namespace`) | `es.uma.seguridad.gymit` |
+| Nombre de paquete | `es.uma.seguridad.gymit` |
 | `minSdk` | 30 (Android 11) |
 | `targetSdk` | 37 (Android 17) |
-| `compileSdk` | 37 |
+| Responsables | Los de la tabla de requisitos técnicos mínimos |
 
 **Justificación del `targetSdk`.** Declaramos la API 37 porque es la versión estable más reciente de Android. Con ella el sistema aplica a la aplicación todas las restricciones de seguridad y privacidad vigentes, porque muchas sólo se activan si la app las declara como objetivo. Además supera el mínimo que Google Play exige hoy a las aplicaciones nuevas (API 36). Un `targetSdk` más bajo dejaría activos comportamientos heredados que en una auditoría contarían como hallazgo.
 
-**Justificación del `minSdk`.** La API 30 es la primera que ofrece de forma uniforme lo que necesita la credencial de acceso: claves del Keystore ligadas a la autenticación biométrica fuerte (`setUserAuthenticationParameters` con `BIOMETRIC_STRONG`), Key Attestation fiable para demostrar al servidor que la clave está en hardware, y permisos de cámara de un solo uso. Bajar de 30 obligaría a mantener rutas de compatibilidad con garantías más débiles justo en la parte crítica de la app, y Android 11 o superior cubre la gran mayoría de los móviles en uso.
-
-### Entorno de construcción
-
-- Kotlin + Jetpack Compose, scripts de Gradle en Kotlin DSL y versiones centralizadas en `gradle/libs.versions.toml`. Room se compila con KSP 2.3.12; desde la serie 2.3 la versión de KSP ya no lleva delante el número de Kotlin.
-- Gradle Wrapper 9.8.2 fijado con `distributionSha256Sum`, de modo que la distribución descargada se verifica contra su hash oficial. Construid siempre con `./gradlew` (o `.\gradlew.bat` en Windows), nunca con un Gradle del sistema.
-- Para ejecutar Gradle hace falta un JDK 17 o superior. El de Android Studio sirve.
-
-### Ramas y revisión
-
+**Ramas y revisión.**
 - `main` es la rama estable y siempre compila. No se hace push directo a `main`.
 - Cada tarea se hace en su propia rama, que sale de `main`: `feat/<tema>`, `fix/<tema>`, `docs/<tema>`, `chore/<tema>`.
 - La integración se hace por Pull Request con **al menos una revisión aprobada** de otro miembro, y la rama tiene que compilar (`./gradlew assembleDebug`) antes de fusionarse.
-- Los mensajes de commit siguen [Conventional Commits](https://www.conventionalcommits.org/es/): `feat: añadir pantalla de login`, `fix: …`, `docs: …`, `chore: …`.
-
-### Secretos y firma
-
-- **Nunca** se suben al repositorio almacenes de claves (`*.jks`, `*.keystore`), contraseñas, `local.properties` ni claves de API, tampoco en un commit que después se revierta, porque el histórico conserva todo. El `.gitignore` ya los excluye.
-- Si un secreto llega al repositorio por error, se considera comprometido: se rota y se avisa al equipo.
-- La configuración de firma de la variante de publicación se leerá de un fichero local fuera de control de versiones (Bloque III).
+- Los mensajes de commit siguen [Conventional Commits](https://www.conventionalcommits.org/es/): `feat: …`, `fix: …`, `docs: …`, `chore: …`.
 
 ## Cómo compilar y ejecutar
 
-1. **Clonar y compilar.** Al abrir el proyecto, Android Studio crea `local.properties` con la ruta del SDK. Por línea de órdenes:
+Hace falta Android Studio con el SDK y un JDK 17 o superior (el de Android Studio sirve).
+
+1. **Clonar y compilar.**
 
    ```bash
    git clone git@github.com:mmarhin/gymit.git && cd gymit
-   ./gradlew assembleDebug      # app/build/outputs/apk/debug/app-debug.apk (socio)
-                                # torno/build/outputs/apk/debug/torno-debug.apk (torno)
+   ./gradlew assembleDebug
    ```
-
-   El proyecto tiene tres módulos: `app` (la app del socio), `torno` (la del gimnasio, ver más abajo) y `comun`, con lo que comparten las dos: el formato del pase QR, el tema y la paleta, y el logo.
 
 2. **Arrancar el backend de la asignatura.** No está en este repositorio: es el material común del campus virtual (`Material comun backend y proyecto base.zip`, carpeta `backend/`), y los usuarios de prueba están en su `LEEME.md`.
 
    ```bash
    python3 servidor.py          # o: java Servidor.java
-   curl http://localhost:8080/api/salud
    ```
 
-3. **Llevar el puerto del backend al dispositivo y ejecutar.** La app apunta a `http://localhost:8080/` (`ClienteRed.BASE_URL`) y el puerto se reenvía por adb. Funciona igual en emulador que en un móvil por USB, sin depender de la IP del ordenador ni del cortafuegos:
+3. **Llevar el puerto del backend al dispositivo e instalar.** La app apunta a `http://localhost:8080/` y el puerto se reenvía por adb, en emulador o en un móvil por USB:
 
    ```bash
-   adb reverse tcp:8080 tcp:8080    # repetir tras reiniciar el emulador o adb
-   ./gradlew :app:installDebug      # sólo la app del socio
-   ./gradlew installDebug           # las dos apps, socio y torno
+   adb reverse tcp:8080 tcp:8080
+   ./gradlew installDebug       # instala la app del socio y la del torno
    ```
-
-> **Antes de la P3.2** hay que deshacer este atajo: volver a `http://10.0.2.2:8080/` en el emulador, o a la IP del ordenador en un móvil físico. Los proxys excluyen `localhost`, así que con este atajo no verían el tráfico. También se quitará `android:usesCleartextTraffic="true"` del manifiesto, que hoy está a propósito.
-
-## Qué hay en la app (cierre del Bloque II)
-
-- Inicio de sesión, con entrada directa al pase si ya hay sesión guardada.
-- Alta con un selfie en directo (CameraX, cámara frontal); el permiso `CAMERA` se pide solo al pulsar «Hacerme el selfie».
-- Pase: QR generado en el móvil que cambia cada 30 segundos, con cuenta atrás (`datos/GeneradorPase.kt`).
-- Historial con copia local en Room y detalle de cada entrada. El modelo del backend común (`Elemento`) se llama aquí `Entrada`; el JSON se mapea con `@SerialName`.
-- Perfil (`GET /api/perfil`) y cierre de sesión, que borra la copia local y el selfie antes de vaciar la sesión (corrección de la P2.2, sección 5.6).
-- Enlace profundo `gymit://entrada/{id}` y `FLAG_SECURE` en la ventana.
-- Identidad visual: logo, icono adaptativo y paleta de colores documentada en **[docs/PALETA.md](docs/PALETA.md)**.
-- **Deliberadamente insegura** hasta el Bloque III: token y selfie en claro, base de datos sin cifrar, QR sin firmar, registros con datos sensibles y tráfico HTTP.
-
-El inventario de datos sensibles, la superficie expuesta, el modelo de amenazas y el reparto están en **[docs/ALCANCE.md](docs/ALCANCE.md)**, el documento de alcance del Bloque II. El estado entregado se marca con el tag `bloque-2`.
-
-## El torno (para la presentación)
-
-El módulo `torno` es la app del gimnasio: lee el pase QR del socio con la cámara trasera y responde a pantalla completa **«Adelante»** en menta o **«Acceso denegado»** en rojo, con el motivo. Es una app aparte a propósito: el papel del gimnasio no debe ir dentro de la app que lleva el socio.
-
-- **Acceso del personal**: se entra con la cuenta `admin` del backend común (la contraseña está en su `LEEME.md`). Una cuenta de socio no puede abrir el torno.
-- **Comprobaciones** (`torno/.../datos/ValidadorPase.kt`, con pruebas en `ValidadorPaseTest`): que sea un pase de Gymit, que no tenga más de 30 s (con 5 s de margen por el desfase de reloj), que no se haya usado antes y que el socio exista (`GET /api/admin/usuarios`).
-- **Registro**: cada lectura, concedida o denegada, se apunta con `POST /api/elementos` y se consulta en la pantalla «Registro de accesos».
-
-**Cómo montar la demostración.** Hacen falta dos dispositivos: uno con la app del socio enseñando el pase y otro con el torno apuntándole con la cámara (por ejemplo, el móvil de un miembro del equipo y otro móvil, o un emulador con la webcam del portátil). Los dos tienen que llegar al backend: con `adb reverse tcp:8080 tcp:8080` en cada uno si van por USB.
-
-```bash
-./gradlew :torno:installDebug
-```
-
-**Limitaciones del Bloque II, a propósito:**
-- **El torno no puede comprobar que el pase es auténtico**: el QR no lleva firma, así que un pase fabricado a mano con el usuario de otro socio pasa (lo demuestra la prueba `sinFirmaUnPaseFabricadoPasa`). La firma con la clave del Keystore y su verificación son del Bloque III.
-- **El acceso queda en el registro del torno, no en el historial del socio**: `POST /api/elementos` guarda en la lista del dueño del token, el torno no tiene el del socio y el backend común no se modifica. El historial del socio con sus entradas reales llegará cuando la validación pase al servidor (Supabase, Bloque III).
-- La comprobación de que la cuenta es de personal se hace en el cliente: el backend común no distingue roles (hallazgo previsto para el Bloque IV).
 
 ## Reconocimiento de una aplicación real (apartado 5.4)
 
 **Aplicación analizada:** Basic-Fit · **Paquete:** `com.basicfit.trainingApp` · **Versión:** 1.98.2 (versionCode 2987).
 Se extrajo con `adb pull` de un Pixel 9 Pro con Android 17, el 27/10/2026.
-
-Es la app real más parecida a Gymit: el socio enseña en el torno un QR generado en el móvil para entrar en el gimnasio.
 
 | Qué mirar | Con qué | Observación |
 |---|---|---|
@@ -151,13 +81,3 @@ Es la app real más parecida a Gymit: el socio enseña en el torno un QR generad
 | Esquemas de firma | `apksigner verify --print-certs -v` | **Firmas v2 y v3**, más una SourceStamp de Google Play. La clave es **RSA de 4096 bits** y el certificado es de Google (Play App Signing): Google custodia la clave de firma, no Basic-Fit. |
 | `minSdk` y `targetSdk` | `aapt2 dump badging` | `minSdk` 26 (Android 8.0), `targetSdk` 36 (Android 16) y `compileSdk` 36. |
 | Número de piezas instaladas | `adb shell pm path` | **5 piezas** (App Bundle): `base.apk`, `split_config.arm64_v8a.apk` (librerías nativas), `split_config.en.apk` y `split_config.es.apk` (idiomas) y `split_config.xxhdpi.apk` (densidad de pantalla). |
-
-**Notas para el cuaderno del equipo**
-
-- **Permisos difíciles de justificar** para una app de acceso y entrenamiento: `RECORD_AUDIO`, `WRITE_SETTINGS`, `ACCESS_NOTIFICATION_POLICY`, `WRITE_EXTERNAL_STORAGE` sin límite de versión y los identificadores de publicidad. `CAMERA` se puede justificar, porque la app incluye VisionCamera y un recortador de imágenes para la foto de perfil. Biometría y `NFC` encajan con el acceso al club.
-- **Componentes exportados:** 14, y 7 sin permiso. Los que más llaman la atención son `CropImageActivity` (librería `com.canhub.cropper`) y `NotificationReceiverActivity` (notifee): están exportadas sin `intent-filter`, así que cualquier app puede lanzarlas con `am start -n`, como hicimos en el paso 10, sin que tengan que estar expuestas. La otra superficie importante son los deep links y el retorno de OAuth.
-- **Configuración de red:** tráfico en claro prohibido en general, pero **permitido hacia `10.0.2.2` y `localhost`**, restos del entorno de desarrollo que llegaron a producción. Solo confía en certificados de usuario en `debug-overrides` y **no tiene certificate pinning** (no hay `pin-set`).
-- **Para la auditoría:** está escrita en **React Native**. La lógica va en `assets/index.android.bundle` compilada a bytecode Hermes, así que jadx solo muestra el envoltorio Java. Usa `libsqlcipher.so` (base de datos local cifrada) y MMKV para almacenamiento, `libtoolChecker.so` (RootBeer) para **detectar root** y `DETECT_SCREEN_CAPTURE` para **detectar capturas de pantalla**. Ese último es un control parecido al `FLAG_SECURE` que tenemos previsto, aunque detectar una captura no es lo mismo que impedirla.
-- **Qué nos llevamos para Gymit:**
-  - Hacer: cifrar los datos locales, detectar root y usar Play App Signing o una clave RSA de 4096 bits.
-  - Evitar: dejar excepciones de tráfico en claro en la versión publicada, exportar actividades sin necesidad, pedir permisos que no usamos y prescindir del pinning.
