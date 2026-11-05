@@ -112,7 +112,9 @@ fun PantallaAccesoMarca(
                 .background(fondoFormulario)
                 .navigationBarsPadding()
                 .imePadding()
-                .verticalScroll(rememberScrollState())
+                // Sin el efecto de estiramiento de los bordes: si todo cabe, la hoja no
+                // debe parecer desplazable; el scroll sólo se nota cuando hace falta
+                .verticalScroll(rememberScrollState(), overscrollEffect = null)
                 .padding(horizontal = 24.dp, vertical = 28.dp)
         ) {
             Text("Iniciar sesión", style = MaterialTheme.typography.headlineSmall)
