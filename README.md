@@ -103,10 +103,14 @@ Gymit es el carné digital del gimnasio: para entrar, el socio enseña en el tor
 
 ## Qué hay en la app (cierre del Bloque II)
 
-- Inicio de sesión, listado «Mis entradas» con copia local en Room y detalle de cada entrada. El modelo del backend común (`Elemento`) se llama aquí `Entrada`; el JSON se mapea con `@SerialName`.
-- Cierre de sesión que borra la copia local del usuario antes de vaciar la sesión (corrección de la P2.2, sección 5.6).
-- Enlace profundo `gymit://entrada/{id}`, permiso `CAMERA` pedido solo cuando se necesita, y `FLAG_SECURE` en la ventana.
-- **Deliberadamente insegura** hasta el Bloque III: token en claro en `shared_prefs`, base de datos sin cifrar, registros con datos sensibles y tráfico HTTP.
+- Inicio de sesión, con entrada directa al pase si ya hay sesión guardada.
+- Alta con un selfie en directo (CameraX, cámara frontal); el permiso `CAMERA` se pide solo al pulsar «Hacerme el selfie».
+- Pase: QR generado en el móvil que cambia cada 30 segundos, con cuenta atrás (`datos/GeneradorPase.kt`).
+- Historial con copia local en Room y detalle de cada entrada. El modelo del backend común (`Elemento`) se llama aquí `Entrada`; el JSON se mapea con `@SerialName`.
+- Perfil (`GET /api/perfil`) y cierre de sesión, que borra la copia local y el selfie antes de vaciar la sesión (corrección de la P2.2, sección 5.6).
+- Enlace profundo `gymit://entrada/{id}` y `FLAG_SECURE` en la ventana.
+- Identidad visual: logo, icono adaptativo y paleta de colores documentada en **[docs/PALETA.md](docs/PALETA.md)**.
+- **Deliberadamente insegura** hasta el Bloque III: token y selfie en claro, base de datos sin cifrar, QR sin firmar, registros con datos sensibles y tráfico HTTP.
 
 El inventario de datos sensibles, la superficie expuesta, el modelo de amenazas y el reparto están en **[docs/ALCANCE.md](docs/ALCANCE.md)**, el documento de alcance del Bloque II. El estado entregado se marca con el tag `bloque-2`.
 

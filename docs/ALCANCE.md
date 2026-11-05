@@ -14,29 +14,31 @@ Este documento describe la aplicación tal como queda al cerrar el Bloque II. Co
 **Quién la usa.** La usan los socios del gimnasio. El personal de recepción, o el propio torno, usa otra aplicación aparte que lee el QR y muestra verde o rojo.
 
 **Estado al cerrar el Bloque II.** La aplicación funciona contra el backend común de la asignatura y tiene:
-- inicio de sesión;
-- listado de entradas, con copia local en Room;
-- detalle de cada entrada;
+- inicio de sesión, y entrada directa al pase si ya hay sesión guardada;
+- alta con un selfie en directo (CameraX, cámara frontal), con el permiso de cámara pedido en el momento en que se necesita;
+- el pase: un QR generado en el móvil que cambia cada 30 segundos, con cuenta atrás;
+- historial de entradas, con copia local en Room, y detalle de cada entrada;
+- perfil del socio (`GET /api/perfil`) y cierre de sesión, que borra la copia local y el selfie;
 - un enlace profundo `gymit://entrada/{id}`;
-- el permiso de cámara, pedido en el momento en que se necesita;
 - `FLAG_SECURE` en la ventana.
 
-Por decisión de la asignatura es **deliberadamente insegura**: guarda el token en claro, registra datos sensibles en logcat y se comunica por HTTP. El QR firmado, la clave en el Keystore y la migración a Supabase son el trabajo del Bloque III.
+Por decisión de la asignatura es **deliberadamente insegura**: guarda el token y el selfie en claro, registra datos sensibles en logcat, se comunica por HTTP y **el QR va sin firmar**. La firma del QR con una clave del Keystore, su validación en el servidor y la migración a Supabase son el trabajo del Bloque III.
 
 ## 2. Datos que maneja
 
-Las tres primeras columnas describen la situación **hoy** y están medidas en un Pixel 9 Pro con Android 17 durante las prácticas P2.2 y P2.3. La última es el plan para el Bloque III.
+Las tres primeras columnas describen la situación **hoy** y están medidas en Android 17: en un Pixel 9 Pro durante las prácticas P2.2 y P2.3, y en el emulador (API 37) para el pase y el selfie. La última es el plan para el Bloque III.
 
 | Dato | Dónde se guarda hoy | Quién puede leerlo hoy | Cómo se protegerá (Bloque III) |
 |---|---|---|---|
 | Token de sesión | `shared_prefs/sesion.xml`, en claro. También aparece en logcat, porque `Log.d` imprime el `toString()` de `RespuestaLogin`, y en la cabecera `Authorization` de cada petición HTTP | Cualquiera con adb y la depuración activada (`run-as`, `logcat`); cualquiera en el camino de red; las copias de seguridad, porque `allowBackup=true` | Sesión gestionada con Supabase Auth; almacenamiento cifrado con una clave del Keystore; quitar el `Log.d`; TLS |
 | Usuario y contraseña | No se guardan, pero viajan en claro por HTTP (`POST /api/login`) y el interceptor `BODY` los escribe en logcat | Cualquiera en el camino de red; cualquiera con `adb logcat` | TLS con anclaje de certificado; interceptor desactivado en la versión publicada |
-| Nombre de usuario | `shared_prefs/sesion.xml`, en claro (se borra al cerrar sesión) | Cualquiera con adb y depuración | Preferencias cifradas |
+| Usuario, nombre completo y rol | `shared_prefs/sesion.xml`, en claro (se borra al cerrar sesión) | Cualquiera con adb y depuración | Preferencias cifradas |
 | Historial de entradas (copia local) | `databases/gymit.db` más el `-wal` (Room, SQLite sin cifrar), con el usuario en la columna `propietario`. Se borra al cerrar sesión desde la corrección de la P2.2 | Cualquiera con adb y depuración (`run-as`), y las copias de seguridad | SQLCipher o cifrado de campos con clave del Keystore; `allowBackup=false` |
 | Perfil (nombre, correo, DNI) | Solo en el servidor (`GET /api/perfil`); hoy viajaría en claro | Cualquiera en el camino de red; cualquiera con un token válido | TLS; RLS en Supabase para que cada socio solo lea lo suyo |
 | Contenido mostrado en pantalla (QR y datos) | En la miniatura de recientes y en las capturas | Nadie: `FLAG_SECURE` ya está activo (comprobado en la P2.3) | Mantener `FLAG_SECURE` en la pantalla del pase |
 | **Credencial de acceso: la clave privada que firma los QR** (el dato más sensible) | Todavía no existe en el código | — | Generada en el Android Keystore, no exportable, ligada a `BIOMETRIC_STRONG`, con Key Attestation al registrarla |
-| Selfie del alta | Todavía no existe en el código | — | Cifrado en el almacenamiento privado; subido por TLS; nunca a la galería |
+| Contenido del pase QR (`gymit:v1:<usuario>:<emitido>:<nonce>`) | Se genera en memoria cada 30 s (`GeneradorPase`); se ve en la pantalla del pase | Cualquiera que vea el QR. Y como **no lleva firma**, cualquiera que conozca el formato puede fabricar uno válido para otro socio | Firma con la clave del Keystore; el servidor comprueba firma, caducidad y nonce de un solo uso |
+| Selfie del alta | `files/selfie/<usuario>.jpg`, JPEG sin cifrar en el almacenamiento privado (nunca en la galería). Se borra al cerrar sesión | Cualquiera con adb y depuración (`run-as`), y las copias de seguridad | Cifrado con clave del Keystore; subido por TLS; `allowBackup=false` |
 | Dirección del backend | Escrita en el APK (`ClienteRed.BASE_URL`) | Cualquiera que decompile el APK | No es secreta. Nunca se meterán claves en el código |
 
 ## 3. Superficie expuesta
@@ -52,11 +54,11 @@ Las tres primeras columnas describen la situación **hoy** y están medidas en u
 | Copias de seguridad | `allowBackup=true`: copia en la nube o transferencia entre dispositivos | Nada | Sesión 3.3 · P3.3 |
 | Registros | `adb logcat` | Nada: token, credenciales y cuerpos de respuesta en claro | Sesión 3.6 |
 | Vista de recientes y capturas | Botón de recientes del sistema, capturas de pantalla | `FLAG_SECURE` activo: miniatura en blanco y captura en negro | Sesión 3.6 |
-| Permiso `CAMERA` | Diálogo del sistema, pedido solo al pulsar «Conceder permiso» | Si se deniega, la app sigue funcionando sin el selfie; Android deja de preguntar tras dos negativas | Bloque III (CameraX y selfie) |
+| Permiso `CAMERA` | Diálogo del sistema, pedido solo al pulsar «Hacerme el selfie» en el alta o desde el perfil | Si se deniega, se puede seguir sin selfie («Ahora no») y el resto de la app funciona; tras dos negativas Android deja de preguntar y la app ofrece abrir los ajustes | Bloque III (cifrado del selfie) |
 
 ## 4. Modelo de amenazas preliminar
 
-1. **El socio que presta o revende su acceso.** Le pasa a un amigo una captura del QR o el propio móvil para que entre sin pagar. Busca que el QR sirva en otro dispositivo o a otra hora. Lo frenan el QR que caduca a los 30 segundos, los nonces de un solo uso, la clave ligada a ese móvil y a su huella, y `FLAG_SECURE`.
+1. **El socio que presta o revende su acceso.** Le pasa a un amigo una captura del QR o el propio móvil para que entre sin pagar, o fabrica un QR a nombre de otro socio, cosa que hoy es posible porque el QR no lleva firma. Busca que el QR sirva en otro dispositivo, a otra hora o con otro nombre. Lo frenan el QR que caduca a los 30 segundos, los nonces de un solo uso, la firma con una clave ligada a ese móvil y a su huella, y `FLAG_SECURE`.
 2. **Alguien con acceso físico al móvil.** Una pareja, un compañero de piso o quien encuentra el móvil desbloqueado. Busca leer el historial (a qué hora entra y sale el socio), el selfie o el token para hacerse pasar por él. Lo frenan el cifrado local, la clave en el Keystore, `allowBackup=false` y que la versión publicada no sea depurable.
 3. **Un atacante en la wifi del gimnasio.** Intercepta el inicio de sesión para robar credenciales o tokens, o modifica respuestas. Lo frenan TLS y el anclaje de certificado.
 4. **Un usuario curioso o malicioso contra la API.** Con su propio token pide datos de otros socios o funciones de administración, o fabrica tokens predecibles. Lo frena la autorización en el servidor (RLS en Supabase y la Edge Function), nunca la interfaz.
