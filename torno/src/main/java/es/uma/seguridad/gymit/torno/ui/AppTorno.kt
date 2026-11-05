@@ -1,6 +1,8 @@
 package es.uma.seguridad.gymit.torno.ui
 
 import android.Manifest
+import android.app.Activity
+import android.view.HapticFeedbackConstants
 import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -11,6 +13,9 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -42,7 +47,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -52,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import es.uma.seguridad.gymit.torno.Lectura
 import es.uma.seguridad.gymit.torno.Pantalla
@@ -142,7 +152,7 @@ private fun PantallaAccesoPersonal(cargando: Boolean, error: String?, onEntrar: 
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().semantics { contentType = ContentType.Username }
         )
         Spacer(Modifier.height(12.dp))
         OutlinedTextField(
@@ -155,7 +165,7 @@ private fun PantallaAccesoPersonal(cargando: Boolean, error: String?, onEntrar: 
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Go),
             keyboardActions = KeyboardActions(onGo = { if (puede) onEntrar(usuario.trim(), clave) }),
             shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().semantics { contentType = ContentType.Password }
         )
         Spacer(Modifier.height(24.dp))
         Button(
@@ -335,6 +345,27 @@ private fun PantallaVeredicto(lectura: Lectura, onCerrar: () -> Unit) {
     val fondo = if (concedido) colores.acceso else colores.denegado
     val texto = if (concedido) colores.onAcceso else colores.onDenegado
     val hora = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(lectura.hora))
+    val vista = LocalView.current
+
+    /*
+     * Al aparecer cada veredicto: una vibración corta distinta para «adelante»
+     * y para «denegado» (el personal la nota sin mirar la pantalla), y los
+     * iconos de la barra de estado oscuros sobre el menta y claros sobre el
+     * rojo, para que se sigan viendo.
+     */
+    DisposableEffect(lectura) {
+        vista.performHapticFeedback(if (concedido) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.REJECT)
+        val ventana = (vista.context as? Activity)?.window
+        val control = ventana?.let { WindowCompat.getInsetsController(it, vista) }
+        val anterior = control?.isAppearanceLightStatusBars
+        control?.isAppearanceLightStatusBars = concedido
+        onDispose { if (anterior != null) control.isAppearanceLightStatusBars = anterior }
+    }
+    // Barra que se vacía en el tiempo que el veredicto se queda en pantalla
+    val restante = remember(lectura) { Animatable(1f) }
+    LaunchedEffect(lectura) {
+        restante.animateTo(0f, tween(VistaModeloTorno.VERDICTO_EN_PANTALLA_MS.toInt(), easing = LinearEasing))
+    }
 
     Column(
         modifier = Modifier
@@ -371,6 +402,22 @@ private fun PantallaVeredicto(lectura: Lectura, onCerrar: () -> Unit) {
         }
         Spacer(Modifier.height(32.dp))
         Text(hora, color = texto.copy(alpha = 0.75f), style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(24.dp))
+        Box(
+            Modifier
+                .fillMaxWidth(0.5f)
+                .height(4.dp)
+                .clip(CircleShape)
+                .background(texto.copy(alpha = 0.2f))
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth(restante.value)
+                    .fillMaxHeight()
+                    .clip(CircleShape)
+                    .background(texto)
+            )
+        }
     }
 }
 

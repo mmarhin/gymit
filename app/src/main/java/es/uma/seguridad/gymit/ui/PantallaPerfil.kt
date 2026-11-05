@@ -61,19 +61,25 @@ fun PantallaPerfil(
                 .padding(horizontal = 20.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(contentAlignment = Alignment.BottomEnd) {
+            // Toda la foto es el botón (112 dp, muy por encima de los 48 dp mínimos);
+            // la cámara de la esquina sólo indica que se puede cambiar
+            Box(
+                contentAlignment = Alignment.BottomEnd,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable(onClickLabel = "Cambiar la foto", onClick = onRehacerSelfie)
+            ) {
                 AvatarSocio(selfie = selfie, nombre = nombre, tamano = 112.dp)
                 Box(
                     Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
-                        .clickable(onClick = onRehacerSelfie),
+                        .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Outlined.PhotoCamera,
-                        contentDescription = "Cambiar la foto",
+                        contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(18.dp)
                     )
@@ -95,10 +101,10 @@ fun PantallaPerfil(
 
         Seccion("Datos personales") {
             when (estado) {
-                is EstadoUi.Reposo, is EstadoUi.Cargando -> Box(
-                    Modifier.fillMaxWidth().padding(24.dp),
-                    contentAlignment = Alignment.Center
-                ) { CircularProgressIndicator(Modifier.size(28.dp)) }
+                is EstadoUi.Reposo, is EstadoUi.Cargando -> repeat(3) { indice ->
+                    if (indice > 0) Separador()
+                    FilaEsqueleto()
+                }
 
                 is EstadoUi.Error -> Column(Modifier.padding(16.dp)) {
                     Text(mensajeDeError(estado.motivo), color = MaterialTheme.colorScheme.error)
@@ -191,6 +197,25 @@ private fun Fila(icono: ImageVector, etiqueta: String, valor: String, onClick: (
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+/** Silueta de una fila mientras llegan los datos del servidor. */
+@Composable
+private fun FilaEsqueleto() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(Modifier.size(24.dp).esqueleto(CircleShape))
+        Spacer(Modifier.width(16.dp))
+        Column {
+            Box(Modifier.width(60.dp).height(10.dp).esqueleto())
+            Spacer(Modifier.height(8.dp))
+            Box(Modifier.width(160.dp).height(14.dp).esqueleto())
         }
     }
 }

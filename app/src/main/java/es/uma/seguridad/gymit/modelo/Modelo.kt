@@ -57,6 +57,16 @@ data class Entrada(
     val fecha: String = ""
 )
 
+/**
+ * El historial tal como lo recibe la pantalla: las entradas y si vienen de la
+ * copia local porque no se ha podido hablar con el servidor, para poder
+ * avisar al socio de que puede no estar al día.
+ */
+data class Historial(
+    val entradas: List<Entrada>,
+    val desdeCopiaLocal: Boolean = false
+)
+
 /** Envoltorio de la respuesta de GET /api/elementos */
 @Serializable
 data class RespuestaEntradas(

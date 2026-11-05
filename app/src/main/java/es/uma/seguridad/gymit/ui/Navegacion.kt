@@ -79,6 +79,7 @@ fun Navegacion(vistaModelo: VistaModelo) {
     val estadoPerfil by vistaModelo.estadoPerfil.collectAsState()
     val socio by vistaModelo.socio.collectAsState()
     val selfie by vistaModelo.selfie.collectAsState()
+    val sesionRechazada by vistaModelo.sesionRechazada.collectAsState()
 
     // Con una sesión guardada se entra directamente al pase
     val inicio = remember { if (vistaModelo.haySesion()) Rutas.PASE else Rutas.LOGIN }
@@ -197,6 +198,25 @@ fun Navegacion(vistaModelo: VistaModelo) {
                 )
             }
         }
+    }
+    /*
+     * El servidor ha rechazado el token guardado. Se avisa y se ofrece volver
+     * a entrar, que es un cierre de sesión normal (borra la copia local y el
+     * selfie, como siempre). Si el socio dice «Ahora no», no se toca nada.
+     */
+    if (sesionRechazada) {
+        AlertDialog(
+            onDismissRequest = vistaModelo::olvidarAvisoSesion,
+            title = { Text("Tu sesión ha caducado") },
+            text = { Text("Vuelve a entrar para ver tus datos al día.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    vistaModelo.salir()
+                    navController.navigate(Rutas.LOGIN) { popUpTo(0) { inclusive = true } }
+                }) { Text("Volver a entrar") }
+            },
+            dismissButton = { TextButton(onClick = vistaModelo::olvidarAvisoSesion) { Text("Ahora no") } }
+        )
     }
 }
 

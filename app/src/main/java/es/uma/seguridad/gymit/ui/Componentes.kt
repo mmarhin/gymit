@@ -9,6 +9,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.composed
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -128,6 +137,26 @@ fun AvatarSocio(
 private fun iniciales(nombre: String): String =
     nombre.split(" ").filter { it.isNotBlank() }.take(2).joinToString("") { it.first().uppercase() }
         .ifEmpty { "?" }
+
+/**
+ * Silueta gris que late mientras llegan los datos, en el sitio donde luego
+ * irá el contenido. Avisa de que algo está cargando sin dejar la pantalla en
+ * blanco.
+ */
+fun Modifier.esqueleto(forma: Shape = RoundedCornerShape(6.dp)): Modifier = composed {
+    val transicion = rememberInfiniteTransition(label = "esqueleto")
+    val alfa by transicion.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(800), RepeatMode.Reverse),
+        label = "alfa"
+    )
+    val color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)
+    this
+        .clip(forma)
+        .graphicsLayer { alpha = alfa }
+        .background(color)
+}
 
 /** Cabecera de las pestañas principales: título grande y acciones a la derecha. */
 @Composable

@@ -122,6 +122,10 @@ private val EsquemaOscuro = darkColorScheme(
  *   modos, como `acceso`: es un fondo a pantalla completa y tiene que leerse
  *   como «rojo» también con el tema oscuro, que es el que usa el torno.
  * @property aviso Icono de aviso, por ejemplo el pase a punto de caducar.
+ * @property avisoSobreMarca Aviso sobre la tarjeta índigo del pase: los
+ *   últimos segundos del código (Ámbar 87, 4,56:1 sobre el índigo).
+ * @property avisoSobreQr Aviso sobre el blanco del QR ampliado, que es blanco
+ *   también en modo oscuro (Ámbar 40, 6,40:1).
  */
 @Immutable
 data class ColoresGymit(
@@ -139,6 +143,8 @@ data class ColoresGymit(
     val aviso: Color,
     val avisoContenedor: Color,
     val onAvisoContenedor: Color,
+    val avisoSobreMarca: Color,
+    val avisoSobreQr: Color,
     val qrModulo: Color,
     val qrFondo: Color
 )
@@ -158,6 +164,8 @@ private val ColoresClaros = ColoresGymit(
     aviso = Ambar[40],
     avisoContenedor = Ambar[90],
     onAvisoContenedor = Ambar[20],
+    avisoSobreMarca = Ambar[87],
+    avisoSobreQr = Ambar[40],
     qrModulo = QrModulo,
     qrFondo = QrFondo
 )

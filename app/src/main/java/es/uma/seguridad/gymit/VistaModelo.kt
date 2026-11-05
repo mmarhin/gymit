@@ -30,8 +30,32 @@ class VistaModelo(private val repositorio: Repositorio) : ViewModel() {
     private val _estadoLogin = MutableStateFlow<EstadoUi<RespuestaLogin>>(EstadoUi.Reposo)
     val estadoLogin: StateFlow<EstadoUi<RespuestaLogin>> = _estadoLogin.asStateFlow()
 
-    private val _estadoLista = MutableStateFlow<EstadoUi<List<Entrada>>>(EstadoUi.Reposo)
-    val estadoLista: StateFlow<EstadoUi<List<Entrada>>> = _estadoLista.asStateFlow()
+    private val _estadoLista = MutableStateFlow<EstadoUi<Historial>>(EstadoUi.Reposo)
+    val estadoLista: StateFlow<EstadoUi<Historial>> = _estadoLista.asStateFlow()
+
+    /**
+     * El servidor ha rechazado el token guardado (por ejemplo, porque se ha
+     * reiniciado y ha olvidado las sesiones). La interfaz lo avisa y ofrece
+     * volver a entrar; no se borra nada hasta que el socio lo pida.
+     */
+    private val _sesionRechazada = MutableStateFlow(false)
+    val sesionRechazada: StateFlow<Boolean> = _sesionRechazada.asStateFlow()
+
+    /**
+     * Mira si una respuesta es «sesión caducada» teniendo una sesión guardada.
+     * Sin sesión guardada (por ejemplo, al abrir el enlace profundo sin haber
+     * entrado, paso 4 de la P2.3) no se avisa: la pantalla ya enseña el error.
+     */
+    private fun <T> vigilar(estado: EstadoUi<T>): EstadoUi<T> {
+        if (estado is EstadoUi.Error && estado.motivo == MotivoError.SesionCaducada && repositorio.socio() != null) {
+            _sesionRechazada.value = true
+        }
+        return estado
+    }
+
+    fun olvidarAvisoSesion() {
+        _sesionRechazada.value = false
+    }
 
     private val _estadoDetalle = MutableStateFlow<EstadoUi<Entrada>>(EstadoUi.Reposo)
     val estadoDetalle: StateFlow<EstadoUi<Entrada>> = _estadoDetalle.asStateFlow()
@@ -85,7 +109,7 @@ class VistaModelo(private val repositorio: Repositorio) : ViewModel() {
     fun cargarPerfil() {
         viewModelScope.launch {
             _estadoPerfil.value = EstadoUi.Cargando
-            _estadoPerfil.value = repositorio.obtenerPerfil()
+            _estadoPerfil.value = vigilar(repositorio.obtenerPerfil())
         }
     }
 
@@ -104,14 +128,14 @@ class VistaModelo(private val repositorio: Repositorio) : ViewModel() {
     fun cargarDetalle(id: Int) {
         viewModelScope.launch {
             _estadoDetalle.value = EstadoUi.Cargando
-            _estadoDetalle.value = repositorio.obtenerEntrada(id)
+            _estadoDetalle.value = vigilar(repositorio.obtenerEntrada(id))
         }
     }
 
     fun cargarEntradas() {
         viewModelScope.launch {
             _estadoLista.value = EstadoUi.Cargando
-            _estadoLista.value = repositorio.obtenerEntradas()
+            _estadoLista.value = vigilar(repositorio.obtenerEntradas())
         }
     }
 
@@ -135,6 +159,7 @@ class VistaModelo(private val repositorio: Repositorio) : ViewModel() {
             _estadoPerfil.value = EstadoUi.Reposo
             _socio.value = null
             _selfie.value = null
+            _sesionRechazada.value = false
         }
     }
 }

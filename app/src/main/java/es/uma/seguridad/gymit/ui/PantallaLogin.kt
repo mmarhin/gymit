@@ -17,11 +17,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import es.uma.seguridad.gymit.ui.theme.GymitTema
 import es.uma.seguridad.gymit.modelo.*
@@ -97,7 +100,8 @@ fun PantallaLogin(
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.fillMaxWidth()
+                // Para que el gestor de contraseñas del móvil sepa qué campo es cuál y los rellene
+                modifier = Modifier.fillMaxWidth().semantics { contentType = ContentType.Username }
             )
             Spacer(Modifier.height(12.dp))
 
@@ -119,7 +123,7 @@ fun PantallaLogin(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Go),
                 keyboardActions = KeyboardActions(onGo = { entrar() }),
                 shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().semantics { contentType = ContentType.Password }
             )
             Spacer(Modifier.height(24.dp))
 
@@ -149,25 +153,6 @@ fun PantallaLogin(
             when (estado) {
                 is EstadoUi.Error -> AvisoError(mensajeDeError(estado.motivo))
                 else -> Unit
-            }
-
-            Spacer(Modifier.weight(1f))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(top = 24.dp)
-            ) {
-                Box(
-                    Modifier
-                        .size(8.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(GymitTema.colores.acceso)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    "Tu cuenta queda vinculada a este móvil.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
         }
     }

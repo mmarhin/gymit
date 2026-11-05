@@ -5,6 +5,7 @@
     <style name="Theme.GymitTorno" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/gymit_noche</item>
         <item name="android:windowSplashScreenBackground">@color/gymit_noche</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/logo_arranque</item>
+        <item name="android:windowSplashScreenAnimationDuration">700</item>
     </style>
 </resources>

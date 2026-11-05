@@ -71,7 +71,7 @@ Material 3 no tiene papeles para «acceso concedido» o «denegado», así que s
 | `onMarca` | `#FFFFFF` | `#FFFFFF` | Texto sobre la marca |
 | `marcaAcento` | `#69F2AF` | `#69F2AF` | El menta del logo, sólo sobre la marca |
 | `tarjeta` | `#FFFFFF` | `#1E1F26` | Fondo de las tarjetas |
-| `acceso` | `#69F2AF` | `#69F2AF` | Pantalla verde del torno, etiqueta «Activo» |
+| `acceso` | `#69F2AF` | `#69F2AF` | Pantalla verde del torno |
 | `onAcceso` | `#002111` | `#002111` | Texto sobre acceso |
 | `accesoTexto` | `#006D44` | `#53DE9D` | «Acceso concedido» escrito sobre el fondo normal |
 | `denegado` | `#BA172A` | `#BA172A` | Pantalla roja del torno. Igual en los dos modos: es un fondo a pantalla completa y en oscuro tiene que seguir leyéndose como rojo |
@@ -79,6 +79,8 @@ Material 3 no tiene papeles para «acceso concedido» o «denegado», así que s
 | `aviso` | `#845500` | `#FFB959` | Icono de aviso |
 | `avisoContenedor` | `#FFDDB4` | `#643F00` | Caja de aviso |
 | `onAvisoContenedor` | `#462B00` | `#FFDDB4` | Texto en la caja de aviso |
+| `avisoSobreMarca` | `#FFD29B` | `#FFD29B` | Los últimos 5 s del código, sobre la tarjeta índigo del pase |
+| `avisoSobreQr` | `#845500` | `#845500` | Los últimos 5 s del código, sobre el blanco del QR ampliado |
 | `qrModulo` | `#0F1324` | `#0F1324` | Módulos del QR |
 | `qrFondo` | `#FFFFFF` | `#FFFFFF` | Fondo del QR (siempre blanco, también en oscuro) |
 
@@ -116,6 +118,8 @@ Contraste calculado con la fórmula de WCAG 2.2 (luminancia relativa). Mínimos:
 | Torno: denegado | `onDenegado` / `denegado` | 4,5:1 | 6,47:1 | 6,47:1 |
 | Icono de aviso | `aviso` / `background` | 3:1 | 6,08:1 | 10,91:1 |
 | Caja de aviso | `onAvisoContenedor` / `avisoContenedor` | 4,5:1 | 10,12:1 | 7,21:1 |
+| Últimos segundos sobre el pase | `avisoSobreMarca` / `marca` | 4,5:1 | 4,56:1 | 4,56:1 |
+| Últimos segundos sobre el QR ampliado | `avisoSobreQr` / `qrFondo` | 4,5:1 | 6,40:1 | 6,40:1 |
 | QR | `qrModulo` / `qrFondo` | 15:1 | 18,44:1 | 18,44:1 |
 
-Las 40 combinaciones cumplen su mínimo. El margen más justo es el menta sobre el índigo del pase (4,55:1): por eso ahí el menta sólo se usa en texto grande o en la barra de la cuenta atrás, y la etiqueta «Activo» va en una pastilla menta con texto oscuro (12,17:1).
+Las 44 combinaciones cumplen su mínimo. Los márgenes más justos son el menta (4,55:1) y el ámbar (4,56:1) sobre el índigo del pase: por eso ahí sólo se usan para los segundos de la cuenta atrás y su barra.

@@ -5,6 +5,7 @@
     <style name="Theme.Gymit" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/gymit_indigo</item>
         <item name="android:windowSplashScreenBackground">@color/gymit_indigo</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/logo_arranque</item>
+        <item name="android:windowSplashScreenAnimationDuration">700</item>
     </style>
 </resources>

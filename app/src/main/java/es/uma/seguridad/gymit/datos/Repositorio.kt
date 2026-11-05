@@ -117,9 +117,15 @@ class Repositorio(
 
     /**
      * Descarga las entradas del usuario, guarda una copia local y las devuelve.
-     * Si la red falla, devuelve la copia local en lugar de un error.
+     * Si la red falla, devuelve la copia local en lugar de un error, marcada
+     * para que la pantalla avise de que puede no estar al día.
+     *
+     * Si el servidor rechaza el token (401, por ejemplo porque se ha
+     * reiniciado y ha olvidado las sesiones), devuelve SesionCaducada. No
+     * borra nada: la copia local sigue en el disco hasta que el socio cierre
+     * sesión, igual que antes.
      */
-    suspend fun obtenerEntradas(): EstadoUi<List<Entrada>> =
+    suspend fun obtenerEntradas(): EstadoUi<Historial> =
         withContext(Dispatchers.IO) {
 
             /*
@@ -147,33 +153,44 @@ class Repositorio(
                         )
                     }
                 )
-                EstadoUi.Exito(respuesta.entradas)
+                EstadoUi.Exito(Historial(respuesta.entradas))
 
+            } catch (e: HttpException) {
+                if (e.code() == 401) EstadoUi.Error(MotivoError.SesionCaducada) else copiaLocal(propietario)
             } catch (e: Exception) {
-                /*
-                 * Si la red falla recurrimos a la copia local. Éste es el
-                 * motivo por el que existe la base de datos, y también el
-                 * motivo por el que los datos del usuario están en el disco del
-                 * dispositivo, sin cifrar, hasta que alguien los borre.
-                 */
-                val copiaLocal = dao.obtenerDe(propietario)
-                if (copiaLocal.isEmpty()) {
-                    EstadoUi.Error(MotivoError.SinConexion)
-                } else {
-                    EstadoUi.Exito(
-                        copiaLocal.map { fila ->
-                            Entrada(fila.id, fila.titulo, fila.contenido, fila.fecha)
-                        }
-                    )
-                }
+                copiaLocal(propietario)
             }
         }
+
+    private suspend fun copiaLocal(propietario: String): EstadoUi<Historial> {
+        /*
+         * Si la red falla recurrimos a la copia local. Éste es el motivo por
+         * el que existe la base de datos, y también el motivo por el que los
+         * datos del usuario están en el disco del dispositivo, sin cifrar,
+         * hasta que alguien los borre.
+         */
+        val copiaLocal = dao.obtenerDe(propietario)
+        return if (copiaLocal.isEmpty()) {
+            EstadoUi.Error(MotivoError.SinConexion)
+        } else {
+            EstadoUi.Exito(
+                Historial(
+                    entradas = copiaLocal.map { fila -> Entrada(fila.id, fila.titulo, fila.contenido, fila.fecha) },
+                    desdeCopiaLocal = true
+                )
+            )
+        }
+    }
 
     suspend fun obtenerPerfil(): EstadoUi<Perfil> = withContext(Dispatchers.IO) {
         val token = sesion.obtenerToken()
             ?: return@withContext EstadoUi.Error(MotivoError.SesionCaducada)
         try {
             EstadoUi.Exito(api.perfil("Bearer $token"))
+        } catch (e: HttpException) {
+            EstadoUi.Error(if (e.code() == 401) MotivoError.SesionCaducada else MotivoError.Desconocido)
+        } catch (e: IOException) {
+            EstadoUi.Error(MotivoError.SinConexion)
         } catch (e: Exception) {
             EstadoUi.Error(MotivoError.Desconocido)
         }
@@ -185,6 +202,8 @@ class Repositorio(
                 ?: return@withContext EstadoUi.Error(MotivoError.SesionCaducada)
             try {
                 EstadoUi.Exito(api.entrada("Bearer $token", id))
+            } catch (e: HttpException) {
+                EstadoUi.Error(if (e.code() == 401) MotivoError.SesionCaducada else MotivoError.Desconocido)
             } catch (e: IOException) {
                 EstadoUi.Error(MotivoError.SinConexion)
             } catch (e: Exception) {

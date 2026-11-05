@@ -2,6 +2,8 @@ package es.uma.seguridad.gymit.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
@@ -31,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import es.uma.seguridad.gymit.modelo.*
 import es.uma.seguridad.gymit.ui.theme.GymitTema
 
@@ -112,7 +115,7 @@ fun PantallaPase(
          * en la vista de recientes.
          */
         AnimatedVisibility(visible = ampliado, enter = fadeIn(), exit = fadeOut()) {
-            QrAmpliado(socio = socio, pase = pase, onCerrar = { onAmpliar(false) })
+            QrAmpliado(socio = socio, selfie = selfie, pase = pase, onCerrar = { onAmpliar(false) })
         }
     }
     BackHandler(enabled = ampliado) { onAmpliar(false) }
@@ -154,28 +157,37 @@ private fun TarjetaPase(pase: Pase?, onAmpliar: () -> Unit, modifier: Modifier =
 
             Spacer(Modifier.height(22.dp))
 
-            CuentaAtras(pase, texto = colores.onMarca, acento = colores.marcaAcento)
+            CuentaAtras(pase, texto = colores.onMarca, acento = colores.marcaAcento, aviso = colores.avisoSobreMarca)
         }
     }
 }
 
+/** El QR del pase. Cuando el código cambia, el nuevo entra con un fundido en vez de saltar de golpe. */
 @Composable
 private fun CodigoQr(pase: Pase, modifier: Modifier = Modifier) {
     val colores = GymitTema.colores
-    val qr = remember(pase.contenido) { generarQr(pase.contenido, colores.qrModulo, colores.qrFondo) }
-    Image(
-        bitmap = qr,
-        contentDescription = "Código QR de acceso",
-        filterQuality = FilterQuality.None,
-        modifier = modifier.fillMaxSize()
-    )
+    Crossfade(targetState = pase.contenido, animationSpec = tween(400), modifier = modifier, label = "qr") { contenido ->
+        val qr = remember(contenido) { generarQr(contenido, colores.qrModulo, colores.qrFondo) }
+        Image(
+            bitmap = qr,
+            contentDescription = "Código QR de acceso",
+            filterQuality = FilterQuality.None,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
 }
 
-/** El QR a pantalla completa, sobre blanco. Se cierra tocando en cualquier sitio o con «atrás». */
+/**
+ * El QR a pantalla completa, sobre blanco, con la foto y el nombre del socio:
+ * es la vista que ve el personal del gimnasio, y la foto es lo que le permite
+ * comprobar que quien enseña el pase es su titular. Se cierra tocando en
+ * cualquier sitio o con «atrás».
+ */
 @Composable
-private fun QrAmpliado(socio: Socio?, pase: Pase?, onCerrar: () -> Unit) {
+private fun QrAmpliado(socio: Socio?, selfie: Selfie?, pase: Pase?, onCerrar: () -> Unit) {
     val colores = GymitTema.colores
     val tinta = colores.qrModulo
+    IconosOscurosEnBarraDeEstado()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -200,21 +212,42 @@ private fun QrAmpliado(socio: Socio?, pase: Pase?, onCerrar: () -> Unit) {
             CodigoQr(pase, Modifier.fillMaxWidth().aspectRatio(1f))
         }
         Spacer(Modifier.height(32.dp))
-        Text(
-            socio?.nombre ?: "",
-            style = MaterialTheme.typography.titleLarge,
-            color = tinta
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            AvatarSocio(selfie = selfie, nombre = socio?.nombre ?: "", tamano = 56.dp, borde = colores.marca)
+            Spacer(Modifier.width(14.dp))
+            Text(
+                socio?.nombre ?: "",
+                style = MaterialTheme.typography.titleLarge,
+                color = tinta
+            )
+        }
+        Spacer(Modifier.height(24.dp))
+        CuentaAtras(
+            pase,
+            texto = tinta,
+            acento = colores.marca,
+            aviso = colores.avisoSobreQr,
+            modifier = Modifier.fillMaxWidth(0.8f)
         )
-        Spacer(Modifier.height(20.dp))
-        CuentaAtras(pase, texto = tinta, acento = colores.marca, modifier = Modifier.fillMaxWidth(0.8f))
         Spacer(Modifier.weight(1f))
     }
 }
 
-/** La barra que se vacía en 30 s y los segundos que le quedan al código. */
+/**
+ * La barra que se vacía en 30 s y los segundos que le quedan al código. En los
+ * últimos [SEGUNDOS_AVISO] pasa a ámbar: así nadie enseña en el torno un
+ * código que va a cambiar mientras el lector lo está leyendo.
+ */
 @Composable
-private fun CuentaAtras(pase: Pase?, texto: Color, acento: Color, modifier: Modifier = Modifier.fillMaxWidth()) {
+private fun CuentaAtras(
+    pase: Pase?,
+    texto: Color,
+    acento: Color,
+    aviso: Color,
+    modifier: Modifier = Modifier.fillMaxWidth()
+) {
     val restante = pase?.segundosRestantes ?: VIGENCIA_PASE_SEGUNDOS
+    val color by animateColorAsState(if (restante <= SEGUNDOS_AVISO) aviso else acento, label = "colorCuentaAtras")
     val fraccion by animateFloatAsState(
         targetValue = restante / VIGENCIA_PASE_SEGUNDOS.toFloat(),
         animationSpec = if (restante == VIGENCIA_PASE_SEGUNDOS) snap() else tween(1000, easing = LinearEasing),
@@ -232,7 +265,7 @@ private fun CuentaAtras(pase: Pase?, texto: Color, acento: Color, modifier: Modi
                 "$restante s",
                 style = MaterialTheme.typography.titleMedium,
                 fontFamily = FontFamily.Monospace,
-                color = acento
+                color = color
             )
         }
         Spacer(Modifier.height(10.dp))
@@ -248,7 +281,7 @@ private fun CuentaAtras(pase: Pase?, texto: Color, acento: Color, modifier: Modi
                     .fillMaxWidth(fraccion)
                     .fillMaxHeight()
                     .clip(CircleShape)
-                    .background(acento)
+                    .background(color)
             )
         }
     }
@@ -288,6 +321,24 @@ private fun AvisoAlta(onHacerSelfie: () -> Unit, modifier: Modifier = Modifier) 
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
+    }
+}
+
+private const val SEGUNDOS_AVISO = 5
+
+/**
+ * Mientras se ve el QR ampliado, que siempre va sobre blanco, los iconos de la
+ * barra de estado pasan a oscuros para que se sigan viendo; al cerrarlo
+ * vuelven a como estaban.
+ */
+@Composable
+private fun IconosOscurosEnBarraDeEstado() {
+    val actividad = LocalContext.current.buscarActividad() ?: return
+    DisposableEffect(actividad) {
+        val control = WindowCompat.getInsetsController(actividad.window, actividad.window.decorView)
+        val anterior = control.isAppearanceLightStatusBars
+        control.isAppearanceLightStatusBars = true
+        onDispose { control.isAppearanceLightStatusBars = anterior }
     }
 }
 
