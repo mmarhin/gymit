@@ -203,8 +203,8 @@ private fun Explicacion(
         )
         Spacer(Modifier.height(24.dp))
 
-        Punto(Icons.Outlined.CameraAlt, "Foto en directo con la cámara frontal. No se aceptan fotos de la galería.")
-        Punto(Icons.Outlined.VerifiedUser, "Sólo se usa para comprobar en el torno que el pase es tuyo.")
+        Punto(Icons.Outlined.CameraAlt, "Foto en directo, nunca de la galería.")
+        Punto(Icons.Outlined.VerifiedUser, "Solo se usa para comprobar que eres tú.")
 
         if (denegado || errorCamara) {
             Spacer(Modifier.height(16.dp))
