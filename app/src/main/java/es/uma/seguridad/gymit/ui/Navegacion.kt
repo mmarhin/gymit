@@ -25,6 +25,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import es.uma.seguridad.gymit.VistaModelo
+import es.uma.seguridad.gymit.ui.theme.GymitTema
 import es.uma.seguridad.gymit.modelo.EstadoUi
 
 /* ==========================================================================
@@ -193,7 +194,7 @@ fun Navegacion(vistaModelo: VistaModelo) {
 
 @Composable
 private fun BarraPestanas(rutaActual: String?, navController: NavHostController) {
-    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+    NavigationBar(containerColor = GymitTema.colores.tarjeta) {
         PESTANAS.forEach { pestana ->
             NavigationBarItem(
                 selected = rutaActual == pestana.ruta,

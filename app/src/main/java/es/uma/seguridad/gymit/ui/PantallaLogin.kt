@@ -18,14 +18,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import es.uma.seguridad.gymit.ui.theme.GymitTema
 import es.uma.seguridad.gymit.modelo.*
-import es.uma.seguridad.gymit.ui.theme.Menta
 
 /**
  * Pantalla de acceso.
@@ -50,7 +49,7 @@ fun PantallaLogin(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.primary)
+            .background(GymitTema.colores.marca)
     ) {
         // Cabecera de marca sobre el índigo del logo
         Column(
@@ -65,13 +64,13 @@ fun PantallaLogin(
             Text(
                 "Tu gimnasio,\nen el bolsillo.",
                 style = MaterialTheme.typography.displaySmall,
-                color = Color.White
+                color = GymitTema.colores.onMarca
             )
             Spacer(Modifier.height(10.dp))
             Text(
                 "Entra con tu cuenta de socio y pasa el torno con tu pase digital.",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color.White.copy(alpha = 0.8f)
+                color = GymitTema.colores.onMarca.copy(alpha = 0.8f)
             )
         }
 
@@ -161,7 +160,7 @@ fun PantallaLogin(
                     Modifier
                         .size(8.dp)
                         .clip(RoundedCornerShape(50))
-                        .background(Menta)
+                        .background(GymitTema.colores.acceso)
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(

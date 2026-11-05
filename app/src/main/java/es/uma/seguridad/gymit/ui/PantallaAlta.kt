@@ -43,10 +43,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import es.uma.seguridad.gymit.ui.theme.Menta
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import es.uma.seguridad.gymit.ui.theme.GymitTema
 import java.io.ByteArrayOutputStream
 
 /* ==========================================================================
@@ -311,7 +311,7 @@ private fun Camara(onFoto: (Bitmap) -> Unit, onError: () -> Unit, onCerrar: () -
                 Modifier
                     .fillMaxWidth(0.82f)
                     .aspectRatio(1f)
-                    .marcoEscaneo(Menta, grosor = 6.dp, largo = 40.dp, radio = 18.dp)
+                    .marcoEscaneo(GymitTema.colores.marcaAcento, grosor = 6.dp, largo = 40.dp, radio = 18.dp)
                     .padding(14.dp)
                     .clip(CircleShape)
             ) {

@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -101,7 +102,7 @@ fun Modifier.marcoEscaneo(
  * Nivel de corrección M: aguanta que se pierda un 15 % del código (un reflejo
  * en la pantalla, un dedo en la esquina) sin hacerlo demasiado denso.
  */
-fun generarQr(contenido: String, lado: Int = 512): ImageBitmap {
+fun generarQr(contenido: String, modulo: Color, fondo: Color, lado: Int = 512): ImageBitmap {
     val matriz = QRCodeWriter().encode(
         contenido,
         BarcodeFormat.QR_CODE,
@@ -112,9 +113,9 @@ fun generarQr(contenido: String, lado: Int = 512): ImageBitmap {
             EncodeHintType.MARGIN to 0
         )
     )
-    val pixeles = IntArray(lado * lado) { i ->
-        if (matriz[i % lado, i / lado]) 0xFF0F1324.toInt() else 0xFFFFFFFF.toInt()
-    }
+    val oscuro = modulo.toArgb()
+    val claro = fondo.toArgb()
+    val pixeles = IntArray(lado * lado) { i -> if (matriz[i % lado, i / lado]) oscuro else claro }
     return android.graphics.Bitmap.createBitmap(pixeles, lado, lado, android.graphics.Bitmap.Config.ARGB_8888)
         .asImageBitmap()
 }

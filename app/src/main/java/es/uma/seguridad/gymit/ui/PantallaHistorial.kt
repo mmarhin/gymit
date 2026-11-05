@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import es.uma.seguridad.gymit.ui.theme.GymitTema
 import es.uma.seguridad.gymit.modelo.*
 
 /* ==========================================================================
@@ -106,7 +107,7 @@ private fun TarjetaEntrada(entrada: Entrada, onClick: () -> Unit) {
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        colors = CardDefaults.cardColors(containerColor = GymitTema.colores.tarjeta)
     ) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             CasillaFecha(entrada.fecha)

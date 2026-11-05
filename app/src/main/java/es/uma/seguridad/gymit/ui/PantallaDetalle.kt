@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import es.uma.seguridad.gymit.ui.theme.GymitTema
 import es.uma.seguridad.gymit.modelo.*
 
 /* ==========================================================================
@@ -114,7 +115,7 @@ fun PantallaDetalle(
                 ) {
                     Card(
                         shape = MaterialTheme.shapes.extraLarge,
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
+                        colors = CardDefaults.cardColors(containerColor = GymitTema.colores.marca),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(Modifier.padding(24.dp)) {
@@ -122,20 +123,20 @@ fun PantallaDetalle(
                                 Icon(
                                     Icons.Outlined.CheckCircle,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.tertiary
+                                    tint = GymitTema.colores.marcaAcento
                                 )
                                 Spacer(Modifier.width(8.dp))
                                 Text(
                                     "Acceso concedido",
                                     style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.tertiary
+                                    color = GymitTema.colores.marcaAcento
                                 )
                             }
                             Spacer(Modifier.height(14.dp))
                             Text(
                                 estado.datos.titulo,
                                 style = MaterialTheme.typography.headlineMedium,
-                                color = MaterialTheme.colorScheme.onPrimary
+                                color = GymitTema.colores.onMarca
                             )
                         }
                     }
@@ -144,7 +145,7 @@ fun PantallaDetalle(
 
                     Card(
                         shape = MaterialTheme.shapes.large,
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                        colors = CardDefaults.cardColors(containerColor = GymitTema.colores.tarjeta),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(Modifier.padding(vertical = 8.dp)) {

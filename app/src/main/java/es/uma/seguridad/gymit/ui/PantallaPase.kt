@@ -31,8 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import es.uma.seguridad.gymit.modelo.*
-import es.uma.seguridad.gymit.ui.theme.Indigo
-import es.uma.seguridad.gymit.ui.theme.Menta
+import es.uma.seguridad.gymit.ui.theme.GymitTema
 
 /* ==========================================================================
    EL PASE
@@ -111,10 +110,11 @@ fun PantallaPase(
 
 @Composable
 private fun TarjetaPase(socio: Socio?, selfie: Selfie?, pase: Pase?, modifier: Modifier = Modifier) {
+    val colores = GymitTema.colores
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(containerColor = Indigo)
+        colors = CardDefaults.cardColors(containerColor = colores.marca, contentColor = colores.onMarca)
     ) {
         Column(
             modifier = Modifier
@@ -124,18 +124,18 @@ private fun TarjetaPase(socio: Socio?, selfie: Selfie?, pase: Pase?, modifier: M
         ) {
             // Socio
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                AvatarSocio(selfie = selfie, nombre = socio?.nombre ?: "", tamano = 44.dp, borde = Menta)
+                AvatarSocio(selfie = selfie, nombre = socio?.nombre ?: "", tamano = 44.dp, borde = colores.marcaAcento)
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
                         socio?.nombre ?: "",
                         style = MaterialTheme.typography.titleMedium,
-                        color = Color.White
+                        color = colores.onMarca
                     )
                     Text(
                         "@${socio?.usuario ?: ""}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.7f)
+                        color = colores.onMarca.copy(alpha = 0.75f)
                     )
                 }
                 EtiquetaActivo()
@@ -148,15 +148,15 @@ private fun TarjetaPase(socio: Socio?, selfie: Selfie?, pase: Pase?, modifier: M
                 modifier = Modifier
                     .fillMaxWidth(0.86f)
                     .aspectRatio(1f)
-                    .marcoEscaneo(Color.White, grosor = 6.dp, largo = 34.dp, radio = 16.dp)
+                    .marcoEscaneo(colores.onMarca, grosor = 6.dp, largo = 34.dp, radio = 16.dp)
                     .padding(18.dp)
                     .clip(MaterialTheme.shapes.medium)
-                    .background(Color.White)
+                    .background(colores.qrFondo)
                     .padding(14.dp),
                 contentAlignment = Alignment.Center
             ) {
                 if (pase != null) {
-                    val qr = remember(pase.contenido) { generarQr(pase.contenido) }
+                    val qr = remember(pase.contenido) { generarQr(pase.contenido, colores.qrModulo, colores.qrFondo) }
                     Image(
                         bitmap = qr,
                         contentDescription = "Código QR de acceso",
@@ -166,7 +166,7 @@ private fun TarjetaPase(socio: Socio?, selfie: Selfie?, pase: Pase?, modifier: M
                             .lineaDeLectura()
                     )
                 } else {
-                    CircularProgressIndicator(color = Indigo)
+                    CircularProgressIndicator(color = colores.marca)
                 }
             }
 
@@ -180,6 +180,7 @@ private fun TarjetaPase(socio: Socio?, selfie: Selfie?, pase: Pase?, modifier: M
 /** La barra menta que se vacía en 30 s, como la línea de lectura del logo. */
 @Composable
 private fun CuentaAtras(pase: Pase?) {
+    val colores = GymitTema.colores
     val restante = pase?.segundosRestantes ?: VIGENCIA_PASE_SEGUNDOS
     val fraccion by animateFloatAsState(
         targetValue = restante / VIGENCIA_PASE_SEGUNDOS.toFloat(),
@@ -191,14 +192,14 @@ private fun CuentaAtras(pase: Pase?) {
             Text(
                 "Código nuevo en",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.8f),
+                color = colores.onMarca.copy(alpha = 0.85f),
                 modifier = Modifier.weight(1f)
             )
             Text(
                 "$restante s",
                 style = MaterialTheme.typography.titleMedium,
                 fontFamily = FontFamily.Monospace,
-                color = Menta
+                color = colores.marcaAcento
             )
         }
         Spacer(Modifier.height(10.dp))
@@ -207,14 +208,14 @@ private fun CuentaAtras(pase: Pase?) {
                 .fillMaxWidth()
                 .height(8.dp)
                 .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.18f))
+                .background(colores.onMarca.copy(alpha = 0.18f))
         ) {
             Box(
                 Modifier
                     .fillMaxWidth(fraccion)
                     .fillMaxHeight()
                     .clip(CircleShape)
-                    .background(Menta)
+                    .background(colores.marcaAcento)
             )
         }
     }
@@ -222,10 +223,11 @@ private fun CuentaAtras(pase: Pase?) {
 
 @Composable
 private fun EtiquetaActivo() {
+    val colores = GymitTema.colores
     Row(
         modifier = Modifier
             .clip(CircleShape)
-            .background(Menta.copy(alpha = 0.18f))
+            .background(colores.acceso)
             .padding(horizontal = 10.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -233,10 +235,10 @@ private fun EtiquetaActivo() {
             Modifier
                 .size(7.dp)
                 .clip(CircleShape)
-                .background(Menta)
+                .background(colores.onAcceso)
         )
         Spacer(Modifier.width(6.dp))
-        Text("Activo", style = MaterialTheme.typography.labelMedium, color = Menta)
+        Text("Activo", style = MaterialTheme.typography.labelMedium, color = colores.onAcceso)
     }
 }
 
@@ -290,11 +292,12 @@ private fun Modifier.lineaDeLectura(): Modifier = composed {
         animationSpec = infiniteRepeatable(tween(1800, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "posicion"
     )
+    val color = GymitTema.colores.marcaAcento
     drawWithContent {
         drawContent()
         val alto = 4.dp.toPx()
         drawRoundRect(
-            color = Menta,
+            color = color,
             topLeft = Offset(-6.dp.toPx(), size.height * posicion - alto / 2),
             size = Size(size.width + 12.dp.toPx(), alto),
             cornerRadius = CornerRadius(alto)

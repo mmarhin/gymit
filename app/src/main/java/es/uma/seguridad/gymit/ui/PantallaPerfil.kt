@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import es.uma.seguridad.gymit.ui.theme.GymitTema
 import es.uma.seguridad.gymit.modelo.*
 
 /* ==========================================================================
@@ -202,7 +203,7 @@ private fun Seccion(titulo: String, contenido: @Composable ColumnScope.() -> Uni
     )
     Card(
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        colors = CardDefaults.cardColors(containerColor = GymitTema.colores.tarjeta),
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)

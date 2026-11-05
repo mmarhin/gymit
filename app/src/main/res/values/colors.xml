@@ -3,5 +3,4 @@
     <!-- Paleta del logo de Gymit. Los mismos valores están en ui/theme/Color.kt para Compose -->
     <color name="gymit_indigo">#FF4949DD</color>
     <color name="gymit_menta">#FF69F2AF</color>
-    <color name="gymit_noche">#FF0F1324</color>
 </resources>
