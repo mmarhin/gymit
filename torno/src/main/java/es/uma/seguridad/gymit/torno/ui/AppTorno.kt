@@ -70,6 +70,7 @@ import es.uma.seguridad.gymit.torno.datos.Acceso
 import es.uma.seguridad.gymit.torno.datos.Resultado
 import es.uma.seguridad.gymit.torno.datos.Veredicto
 import es.uma.seguridad.gymit.ui.LogoGymit
+import es.uma.seguridad.gymit.ui.PantallaAccesoMarca
 import es.uma.seguridad.gymit.ui.marcoEscaneo
 import es.uma.seguridad.gymit.ui.theme.GymitTema
 import java.text.SimpleDateFormat
@@ -120,69 +121,23 @@ fun AppTorno(vistaModelo: VistaModeloTorno) {
 
 /* ----------------------------- Acceso del personal ----------------------------- */
 
+/**
+ * El mismo diseño de acceso que la app del socio (PantallaAccesoMarca, en
+ * :comun), con el fondo oscuro del torno en lugar del índigo de la marca.
+ */
 @Composable
 private fun PantallaAccesoPersonal(cargando: Boolean, error: String?, onEntrar: (String, String) -> Unit) {
-    var usuario by remember { mutableStateOf("") }
-    var clave by remember { mutableStateOf("") }
-    val puede = usuario.isNotBlank() && clave.isNotBlank() && !cargando
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .systemBarsPadding()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(28.dp)
-    ) {
-        Spacer(Modifier.height(24.dp))
-        LogoGymit(tamano = 64.dp)
-        Spacer(Modifier.height(24.dp))
-        Text("Torno", style = MaterialTheme.typography.displaySmall)
-        Text(
-            "Acceso del personal del gimnasio",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.height(32.dp))
-        OutlinedTextField(
-            value = usuario,
-            onValueChange = { usuario = it },
-            label = { Text("Usuario") },
-            leadingIcon = { Icon(Icons.Outlined.Person, null) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.fillMaxWidth().semantics { contentType = ContentType.Username }
-        )
-        Spacer(Modifier.height(12.dp))
-        OutlinedTextField(
-            value = clave,
-            onValueChange = { clave = it },
-            label = { Text("Contraseña") },
-            leadingIcon = { Icon(Icons.Outlined.Lock, null) },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Go),
-            keyboardActions = KeyboardActions(onGo = { if (puede) onEntrar(usuario.trim(), clave) }),
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.fillMaxWidth().semantics { contentType = ContentType.Password }
-        )
-        Spacer(Modifier.height(24.dp))
-        Button(
-            onClick = { onEntrar(usuario.trim(), clave) },
-            enabled = puede,
-            shape = MaterialTheme.shapes.medium,
-            contentPadding = PaddingValues(vertical = 16.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (cargando) CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
-            else Text("Abrir el torno")
-        }
-        if (error != null) {
-            Spacer(Modifier.height(16.dp))
-            Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
-        }
-    }
+    PantallaAccesoMarca(
+        titular = "Abre el torno\ndel gimnasio.",
+        entradilla = "Acceso para el personal. Entra con tu cuenta de recepción para empezar a leer pases.",
+        textoBoton = "Abrir el torno",
+        cargando = cargando,
+        error = error,
+        onEntrar = onEntrar,
+        fondoCabecera = MaterialTheme.colorScheme.background,
+        textoCabecera = MaterialTheme.colorScheme.onBackground,
+        fondoFormulario = GymitTema.colores.tarjeta
+    )
 }
 
 /* ----------------------------- Escáner ----------------------------- */
