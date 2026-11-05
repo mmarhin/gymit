@@ -7,9 +7,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Lock
@@ -38,9 +40,12 @@ import androidx.compose.ui.unit.dp
    torno: una cabecera con el logo y un titular, y debajo una hoja redondeada
    con el formulario. Cada app pone sus textos y sus colores.
 
-   No se desplaza: cuando aparece el teclado, el titular se oculta y la
-   cabecera se queda sólo con el logo, de modo que el formulario y el botón
-   siguen a la vista sin hacer scroll.
+   En uso normal no hay nada que desplazar: cuando aparece el teclado, el
+   titular se oculta y la cabecera se queda sólo con el logo, de modo que el
+   formulario y el botón siguen a la vista. La hoja del formulario admite
+   scroll sólo como red de seguridad, para cuando ni así cabe (letra grande
+   en accesibilidad, móviles pequeños, el aviso de error, pantalla dividida):
+   si el contenido cabe, no se mueve.
 
    Como el resto de pantallas, sólo guarda lo que se va tecleando: el
    resultado del intento (cargando, error) lo recibe de fuera.
@@ -98,7 +103,7 @@ fun PantallaAccesoMarca(
             }
         }
 
-        // Formulario en una hoja que sube desde abajo, sin desplazamiento
+        // Formulario en una hoja que sube desde abajo
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -107,6 +112,7 @@ fun PantallaAccesoMarca(
                 .background(fondoFormulario)
                 .navigationBarsPadding()
                 .imePadding()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 28.dp)
         ) {
             Text("Iniciar sesión", style = MaterialTheme.typography.headlineSmall)
