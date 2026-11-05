@@ -1,31 +1,35 @@
 package es.uma.seguridad.gymit.ui
 
-import androidx.compose.animation.core.*
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.PhotoCamera
-import androidx.compose.material.icons.outlined.Sensors
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import es.uma.seguridad.gymit.modelo.*
 import es.uma.seguridad.gymit.ui.theme.GymitTema
@@ -33,80 +37,89 @@ import es.uma.seguridad.gymit.ui.theme.GymitTema
 /* ==========================================================================
    EL PASE
 
-   La pantalla que el socio enseña en el torno: su foto, su nombre y un QR que
-   cambia cada 30 segundos con su cuenta atrás.
+   La pantalla que el socio enseña en el torno: un QR que cambia cada 30
+   segundos con su cuenta atrás. Al tocar el código se amplía a pantalla
+   completa, sobre blanco, para que el lector lo lea mejor.
 
    Igual que el resto de pantallas, no genera nada por su cuenta: recibe el
    pase ya hecho del modelo de vista (que lo pide al repositorio) y se limita a
    dibujarlo.
    ========================================================================== */
 
+/**
+ * @param ampliado si el QR se está enseñando a pantalla completa. Lo guarda la
+ *   navegación, porque mientras está ampliado hay que esconder la barra de
+ *   pestañas, que no es de esta pantalla.
+ */
 @Composable
 fun PantallaPase(
     socio: Socio?,
     selfie: Selfie?,
     pase: Pase?,
     selfieComprobado: Boolean,
+    ampliado: Boolean,
+    onAmpliar: (Boolean) -> Unit,
     onHacerSelfie: () -> Unit
 ) {
     BrilloMaximo()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        CabeceraPestana(
-            titulo = "Hola, ${socio?.nombre?.substringBefore(' ') ?: "socio"}",
-            subtitulo = "Tu pase para entrar al gimnasio",
-            acciones = {
-                AvatarSocio(selfie = selfie, nombre = socio?.nombre ?: "", tamano = 48.dp)
-                Spacer(Modifier.width(12.dp))
-            }
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        TarjetaPase(
-            socio = socio,
-            selfie = selfie,
-            pase = pase,
-            modifier = Modifier.padding(horizontal = 20.dp)
-        )
-
-        Spacer(Modifier.height(20.dp))
-
-        if (selfieComprobado && selfie == null) {
-            AvisoAlta(onHacerSelfie, Modifier.padding(horizontal = 20.dp))
-            Spacer(Modifier.height(16.dp))
-        }
-
-        Row(
+    Box(Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 32.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
         ) {
-            Icon(
-                Icons.Outlined.Sensors,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
+            CabeceraPestana(
+                titulo = "Hola, ${socio?.nombre?.substringBefore(' ') ?: ""}",
+                subtitulo = "Tu pase para entrar al gimnasio",
+                acciones = {
+                    AvatarSocio(selfie = selfie, nombre = socio?.nombre ?: "", tamano = 48.dp)
+                    Spacer(Modifier.width(12.dp))
+                }
             )
-            Spacer(Modifier.width(8.dp))
+
+            Spacer(Modifier.height(8.dp))
+
+            TarjetaPase(
+                pase = pase,
+                onAmpliar = { onAmpliar(true) },
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
+
+            Spacer(Modifier.height(20.dp))
+
+            if (selfieComprobado && selfie == null) {
+                AvisoAlta(onHacerSelfie, Modifier.padding(horizontal = 20.dp))
+                Spacer(Modifier.height(16.dp))
+            }
+
             Text(
-                "Acerca la pantalla al lector del torno",
+                "Acerca la pantalla al lector del torno.\nToca el código para verlo más grande.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp, vertical = 8.dp)
             )
+            Spacer(Modifier.height(24.dp))
         }
-        Spacer(Modifier.height(24.dp))
+
+        /*
+         * El QR ampliado es una capa dentro de esta misma pantalla, no un
+         * Dialog: un Dialog abre otra ventana, y esa ventana no hereda el
+         * FLAG_SECURE de la Activity, así que el QR saldría en las capturas y
+         * en la vista de recientes.
+         */
+        AnimatedVisibility(visible = ampliado, enter = fadeIn(), exit = fadeOut()) {
+            QrAmpliado(socio = socio, pase = pase, onCerrar = { onAmpliar(false) })
+        }
     }
+    BackHandler(enabled = ampliado) { onAmpliar(false) }
 }
 
 @Composable
-private fun TarjetaPase(socio: Socio?, selfie: Selfie?, pase: Pase?, modifier: Modifier = Modifier) {
+private fun TarjetaPase(pase: Pase?, onAmpliar: () -> Unit, modifier: Modifier = Modifier) {
     val colores = GymitTema.colores
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -119,49 +132,21 @@ private fun TarjetaPase(socio: Socio?, selfie: Selfie?, pase: Pase?, modifier: M
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Socio
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                AvatarSocio(selfie = selfie, nombre = socio?.nombre ?: "", tamano = 44.dp, borde = colores.marcaAcento)
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        socio?.nombre ?: "",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = colores.onMarca
-                    )
-                    Text(
-                        "@${socio?.usuario ?: ""}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colores.onMarca.copy(alpha = 0.75f)
-                    )
-                }
-                EtiquetaActivo()
-            }
-
-            Spacer(Modifier.height(24.dp))
-
             // QR dentro del visor del logo
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.86f)
+                    .fillMaxWidth(0.9f)
                     .aspectRatio(1f)
                     .marcoEscaneo(colores.onMarca, grosor = 6.dp, largo = 34.dp, radio = 16.dp)
                     .padding(18.dp)
                     .clip(MaterialTheme.shapes.medium)
                     .background(colores.qrFondo)
+                    .clickable(enabled = pase != null, onClickLabel = "Ampliar el código", onClick = onAmpliar)
                     .padding(14.dp),
                 contentAlignment = Alignment.Center
             ) {
                 if (pase != null) {
-                    val qr = remember(pase.contenido) { generarQr(pase.contenido, colores.qrModulo, colores.qrFondo) }
-                    Image(
-                        bitmap = qr,
-                        contentDescription = "Código QR de acceso",
-                        filterQuality = FilterQuality.None,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .lineaDeLectura()
-                    )
+                    CodigoQr(pase)
                 } else {
                     CircularProgressIndicator(color = colores.marca)
                 }
@@ -169,34 +154,85 @@ private fun TarjetaPase(socio: Socio?, selfie: Selfie?, pase: Pase?, modifier: M
 
             Spacer(Modifier.height(22.dp))
 
-            CuentaAtras(pase)
+            CuentaAtras(pase, texto = colores.onMarca, acento = colores.marcaAcento)
         }
     }
 }
 
-/** La barra menta que se vacía en 30 s, como la línea de lectura del logo. */
 @Composable
-private fun CuentaAtras(pase: Pase?) {
+private fun CodigoQr(pase: Pase, modifier: Modifier = Modifier) {
     val colores = GymitTema.colores
+    val qr = remember(pase.contenido) { generarQr(pase.contenido, colores.qrModulo, colores.qrFondo) }
+    Image(
+        bitmap = qr,
+        contentDescription = "Código QR de acceso",
+        filterQuality = FilterQuality.None,
+        modifier = modifier.fillMaxSize()
+    )
+}
+
+/** El QR a pantalla completa, sobre blanco. Se cierra tocando en cualquier sitio o con «atrás». */
+@Composable
+private fun QrAmpliado(socio: Socio?, pase: Pase?, onCerrar: () -> Unit) {
+    val colores = GymitTema.colores
+    val tinta = colores.qrModulo
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colores.qrFondo)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClickLabel = "Cerrar",
+                onClick = onCerrar
+            )
+            .systemBarsPadding()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            IconButton(onClick = onCerrar) {
+                Icon(Icons.Outlined.Close, contentDescription = "Cerrar", tint = tinta)
+            }
+        }
+        Spacer(Modifier.weight(1f))
+        if (pase != null) {
+            CodigoQr(pase, Modifier.fillMaxWidth().aspectRatio(1f))
+        }
+        Spacer(Modifier.height(32.dp))
+        Text(
+            socio?.nombre ?: "",
+            style = MaterialTheme.typography.titleLarge,
+            color = tinta
+        )
+        Spacer(Modifier.height(20.dp))
+        CuentaAtras(pase, texto = tinta, acento = colores.marca, modifier = Modifier.fillMaxWidth(0.8f))
+        Spacer(Modifier.weight(1f))
+    }
+}
+
+/** La barra que se vacía en 30 s y los segundos que le quedan al código. */
+@Composable
+private fun CuentaAtras(pase: Pase?, texto: Color, acento: Color, modifier: Modifier = Modifier.fillMaxWidth()) {
     val restante = pase?.segundosRestantes ?: VIGENCIA_PASE_SEGUNDOS
     val fraccion by animateFloatAsState(
         targetValue = restante / VIGENCIA_PASE_SEGUNDOS.toFloat(),
         animationSpec = if (restante == VIGENCIA_PASE_SEGUNDOS) snap() else tween(1000, easing = LinearEasing),
         label = "cuentaAtras"
     )
-    Column(Modifier.fillMaxWidth()) {
+    Column(modifier) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 "Código nuevo en",
                 style = MaterialTheme.typography.bodyMedium,
-                color = colores.onMarca.copy(alpha = 0.85f),
+                color = texto.copy(alpha = 0.85f),
                 modifier = Modifier.weight(1f)
             )
             Text(
                 "$restante s",
                 style = MaterialTheme.typography.titleMedium,
                 fontFamily = FontFamily.Monospace,
-                color = colores.marcaAcento
+                color = acento
             )
         }
         Spacer(Modifier.height(10.dp))
@@ -205,37 +241,16 @@ private fun CuentaAtras(pase: Pase?) {
                 .fillMaxWidth()
                 .height(8.dp)
                 .clip(CircleShape)
-                .background(colores.onMarca.copy(alpha = 0.18f))
+                .background(texto.copy(alpha = 0.18f))
         ) {
             Box(
                 Modifier
                     .fillMaxWidth(fraccion)
                     .fillMaxHeight()
                     .clip(CircleShape)
-                    .background(colores.marcaAcento)
+                    .background(acento)
             )
         }
-    }
-}
-
-@Composable
-private fun EtiquetaActivo() {
-    val colores = GymitTema.colores
-    Row(
-        modifier = Modifier
-            .clip(CircleShape)
-            .background(colores.acceso)
-            .padding(horizontal = 10.dp, vertical = 5.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            Modifier
-                .size(7.dp)
-                .clip(CircleShape)
-                .background(colores.onAcceso)
-        )
-        Spacer(Modifier.width(6.dp))
-        Text("Activo", style = MaterialTheme.typography.labelMedium, color = colores.onAcceso)
     }
 }
 
@@ -249,15 +264,11 @@ private fun AvisoAlta(onHacerSelfie: () -> Unit, modifier: Modifier = Modifier) 
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.secondary),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Outlined.PhotoCamera, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondary)
-            }
+            Icon(
+                Icons.Outlined.PhotoCamera,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(
@@ -277,28 +288,6 @@ private fun AvisoAlta(onHacerSelfie: () -> Unit, modifier: Modifier = Modifier) 
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
-    }
-}
-
-/** Una línea menta que recorre el QR de arriba abajo, como un lector leyéndolo. */
-private fun Modifier.lineaDeLectura(): Modifier = composed {
-    val transicion = rememberInfiniteTransition(label = "lectura")
-    val posicion by transicion.animateFloat(
-        initialValue = 0.08f,
-        targetValue = 0.92f,
-        animationSpec = infiniteRepeatable(tween(1800, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "posicion"
-    )
-    val color = GymitTema.colores.marcaAcento
-    drawWithContent {
-        drawContent()
-        val alto = 4.dp.toPx()
-        drawRoundRect(
-            color = color,
-            topLeft = Offset(-6.dp.toPx(), size.height * posicion - alto / 2),
-            size = Size(size.width + 12.dp.toPx(), alto),
-            cornerRadius = CornerRadius(alto)
-        )
     }
 }
 

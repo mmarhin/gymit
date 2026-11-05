@@ -13,6 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -82,11 +85,14 @@ fun Navegacion(vistaModelo: VistaModelo) {
 
     val rutaActual = navController.currentBackStackEntryAsState().value?.destination?.route
 
+    // QR del pase a pantalla completa: mientras se ve, sobra la barra de pestañas
+    var qrAmpliado by rememberSaveable { mutableStateOf(false) }
+
     Scaffold(
         // Cada pantalla reserva el hueco de las barras del sistema; aquí sólo el de la barra de pestañas
         contentWindowInsets = WindowInsets(0),
         bottomBar = {
-            if (PESTANAS.any { it.ruta == rutaActual }) {
+            if (PESTANAS.any { it.ruta == rutaActual } && !(rutaActual == Rutas.PASE && qrAmpliado)) {
                 BarraPestanas(rutaActual, navController)
             }
         }
@@ -144,6 +150,8 @@ fun Navegacion(vistaModelo: VistaModelo) {
                     selfie = selfie,
                     pase = pase,
                     selfieComprobado = selfieComprobado,
+                    ampliado = qrAmpliado,
+                    onAmpliar = { qrAmpliado = it },
                     onHacerSelfie = { navController.navigate(Rutas.alta(primera = false)) }
                 )
             }

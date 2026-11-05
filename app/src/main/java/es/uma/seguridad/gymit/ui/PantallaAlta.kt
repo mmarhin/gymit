@@ -185,13 +185,10 @@ private fun Explicacion(
             Modifier
                 .size(120.dp)
                 .align(Alignment.CenterHorizontally)
-                .marcoEscaneo(MaterialTheme.colorScheme.primary, grosor = 5.dp, largo = 26.dp)
-                .padding(16.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .marcoEscaneo(MaterialTheme.colorScheme.primary, grosor = 5.dp, largo = 26.dp),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Outlined.Face, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp))
+            Icon(Icons.Outlined.Face, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(56.dp))
         }
         Spacer(Modifier.height(28.dp))
         Text(

@@ -45,7 +45,7 @@ fun PantallaHistorial(
     Column(Modifier.fillMaxSize()) {
         CabeceraPestana(
             titulo = "Historial",
-            subtitulo = (estado as? EstadoUi.Exito)?.datos?.size?.let { n ->
+            subtitulo = (estado as? EstadoUi.Exito)?.datos?.size?.takeIf { it > 0 }?.let { n ->
                 if (n == 1) "1 entrada registrada" else "$n entradas registradas"
             } ?: "Tus entradas al gimnasio",
             acciones = {

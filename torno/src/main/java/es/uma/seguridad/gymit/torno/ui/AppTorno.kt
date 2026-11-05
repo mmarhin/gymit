@@ -358,19 +358,29 @@ private fun PantallaVeredicto(lectura: Lectura, onCerrar: () -> Unit) {
                 Text("Adelante", color = texto, fontSize = 56.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
                 Text(v.nombre, color = texto, style = MaterialTheme.typography.headlineMedium)
-                Text("@${v.usuario}", color = texto.copy(alpha = 0.75f), style = MaterialTheme.typography.titleMedium)
+                UsuarioVeredicto(v.usuario, texto)
             }
             is Veredicto.Denegado -> {
                 Text("Acceso denegado", color = texto, fontSize = 44.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(12.dp))
                 Text(v.motivo.texto, color = texto, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
                 if (v.usuario != null) {
-                    Text("@${v.usuario}", color = texto.copy(alpha = 0.75f), style = MaterialTheme.typography.titleMedium)
+                    UsuarioVeredicto(v.usuario, texto)
                 }
             }
         }
         Spacer(Modifier.height(32.dp))
         Text(hora, color = texto.copy(alpha = 0.75f), style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+/** El usuario del socio con el icono de persona, debajo del veredicto. */
+@Composable
+private fun UsuarioVeredicto(usuario: String, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Outlined.Person, contentDescription = "Usuario", tint = color.copy(alpha = 0.75f), modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(usuario, color = color.copy(alpha = 0.75f), style = MaterialTheme.typography.titleMedium)
     }
 }
 
@@ -422,21 +432,12 @@ private fun FilaAcceso(acceso: Acceso) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(if (concedido) colores.acceso else colores.denegadoContenedor),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    if (concedido) Icons.Outlined.CheckCircle else Icons.Outlined.Block,
-                    null,
-                    tint = if (concedido) colores.onAcceso else colores.onDenegadoContenedor,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            Spacer(Modifier.width(14.dp))
+            Icon(
+                if (concedido) Icons.Outlined.CheckCircle else Icons.Outlined.Block,
+                null,
+                tint = if (concedido) colores.accesoTexto else MaterialTheme.colorScheme.error
+            )
+            Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
                 Text(acceso.titulo.substringAfter(" · "), style = MaterialTheme.typography.titleSmall)
                 Text(

@@ -11,7 +11,6 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -76,7 +75,7 @@ fun PantallaDetalle(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Entrada #$id") },
+                title = { Text("Entrada") },
                 navigationIcon = {
                     IconButton(onClick = onVolver) {
                         Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Volver")
@@ -150,8 +149,6 @@ fun PantallaDetalle(
                     ) {
                         Column(Modifier.padding(vertical = 8.dp)) {
                             FilaDato(Icons.Outlined.CalendarMonth, "Fecha", fechaLarga(estado.datos.fecha))
-                            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                            FilaDato(Icons.Outlined.Tag, "Identificador", "#${estado.datos.id}")
                         }
                     }
 
@@ -178,16 +175,8 @@ private fun FilaDato(icono: ImageVector, etiqueta: String, valor: String) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icono, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-        }
-        Spacer(Modifier.width(14.dp))
+        Icon(icono, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.width(16.dp))
         Column {
             Text(etiqueta, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(valor, style = MaterialTheme.typography.bodyLarge)

@@ -11,7 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.Logout
-import androidx.compose.material.icons.outlined.AlternateEmail
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Badge
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Mail
@@ -125,7 +125,7 @@ fun PantallaPerfil(
                 }
 
                 is EstadoUi.Exito -> {
-                    Fila(Icons.Outlined.AlternateEmail, "Usuario", estado.datos.usuario)
+                    Fila(Icons.Outlined.Person, "Usuario", estado.datos.usuario)
                     Separador()
                     Fila(Icons.Outlined.Mail, "Correo", estado.datos.correo)
                     Separador()
@@ -166,15 +166,7 @@ fun PantallaPerfil(
             Text("Cerrar sesión")
         }
 
-        Text(
-            "Gymit 1.0 · Grupo K · Seguridad en Entornos Móviles",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp)
-        )
+        Spacer(Modifier.height(24.dp))
     }
 
     if (confirmarSalida) {
@@ -222,16 +214,8 @@ private fun Fila(icono: ImageVector, etiqueta: String, valor: String, onClick: (
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icono, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-        }
-        Spacer(Modifier.width(14.dp))
+        Icon(icono, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
             Text(etiqueta, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(valor, style = MaterialTheme.typography.bodyLarge)
@@ -248,6 +232,6 @@ private fun Fila(icono: ImageVector, etiqueta: String, valor: String, onClick: (
 
 @Composable
 private fun Separador() = HorizontalDivider(
-    modifier = Modifier.padding(start = 66.dp, end = 16.dp),
+    modifier = Modifier.padding(start = 56.dp, end = 16.dp),
     color = MaterialTheme.colorScheme.outlineVariant
 )
