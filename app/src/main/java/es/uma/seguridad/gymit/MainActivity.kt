@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -12,7 +13,7 @@ import es.uma.seguridad.gymit.ui.Navegacion
 import es.uma.seguridad.gymit.ui.theme.GymitTheme
 
 /**
- * Punto de entrada. ESTÁ TERMINADO: no hace falta tocarlo en P2.2.
+ * Punto de entrada.
  *
  * Las dependencias se construyen aquí a mano. En un proyecto real se usaría
  * inyección de dependencias (sesión 2.5.4); lo importante es la idea: el
@@ -24,6 +25,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Android 15+ dibuja siempre de borde a borde; cada pantalla reserva su hueco
+        enableEdgeToEdge()
         window.setFlags(
             WindowManager.LayoutParams.FLAG_SECURE,
             WindowManager.LayoutParams.FLAG_SECURE
@@ -32,7 +35,8 @@ class MainActivity : ComponentActivity() {
         val repositorio = Repositorio(
             api = ClienteRed.crear(),
             sesion = SesionLocal(applicationContext),
-            dao = BaseDatos.obtener(applicationContext).entradaDao()
+            dao = BaseDatos.obtener(applicationContext).entradaDao(),
+            selfies = AlmacenSelfie(applicationContext)
         )
 
         setContent {

@@ -1,11 +1,24 @@
 package es.uma.seguridad.gymit.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import es.uma.seguridad.gymit.modelo.*
 
@@ -62,10 +75,13 @@ fun PantallaDetalle(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Entrada $id") },
+                title = { Text("Entrada #$id") },
                 navigationIcon = {
-                    TextButton(onClick = onVolver) { Text("Volver") }
-                }
+                    IconButton(onClick = onVolver) {
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Volver")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         }
     ) { relleno ->
@@ -84,39 +100,96 @@ fun PantallaDetalle(
                 is EstadoUi.Reposo -> CircularProgressIndicator()
                 is EstadoUi.Cargando -> CircularProgressIndicator()
 
-                is EstadoUi.Error -> Text(
-                    text = mensajeDeError(estado.motivo),
-                    color = MaterialTheme.colorScheme.error
+                is EstadoUi.Error -> EstadoVacio(
+                    icono = if (estado.motivo == MotivoError.SesionCaducada) Icons.Outlined.Lock else Icons.Outlined.CloudOff,
+                    titulo = "No se puede mostrar esta entrada",
+                    texto = mensajeDeError(estado.motivo)
                 )
 
                 is EstadoUi.Exito -> Column(
-                    modifier = Modifier.fillMaxSize().padding(24.dp)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(20.dp)
                 ) {
-                    Text(estado.datos.titulo, style = MaterialTheme.typography.titleLarge)
-                    Spacer(Modifier.height(12.dp))
+                    Card(
+                        shape = MaterialTheme.shapes.extraLarge,
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(Modifier.padding(24.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Outlined.CheckCircle,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.tertiary
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    "Acceso concedido",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.tertiary
+                                )
+                            }
+                            Spacer(Modifier.height(14.dp))
+                            Text(
+                                estado.datos.titulo,
+                                style = MaterialTheme.typography.headlineMedium,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Card(
+                        shape = MaterialTheme.shapes.large,
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(Modifier.padding(vertical = 8.dp)) {
+                            FilaDato(Icons.Outlined.CalendarMonth, "Fecha", fechaLarga(estado.datos.fecha))
+                            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                            FilaDato(Icons.Outlined.Tag, "Identificador", "#${estado.datos.id}")
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Text(
+                        "Detalles",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+                    )
                     Text(estado.datos.contenido, style = MaterialTheme.typography.bodyLarge)
-                    Spacer(Modifier.height(12.dp))
-                    Text(estado.datos.fecha, style = MaterialTheme.typography.labelMedium)
                 }
             }
         }
     }
 }
 
-/**
- * Traduce el motivo del error a un texto para la persona que usa la aplicación.
- *
- * Igual que en PantallaLogin.kt, el mensaje no revela detalles internos: ni
- * direcciones de servidor, ni rutas, ni trazas de excepciones (sesión 2.4.5).
- *
- * PARA EL CUADERNO: cuando en el paso 4 abras esta pantalla sin haber iniciado
- * sesión, aquí aparecerá uno de estos cuatro mensajes. Anota CUÁL, porque te
- * dice exactamente qué capa de la aplicación te ha detenido, y esa es la
- * pregunta central de la práctica de hoy.
- */
-private fun mensajeDeError(motivo: MotivoError): String = when (motivo) {
-    MotivoError.SinConexion -> "No se ha podido conectar. Inténtalo de nuevo."
-    MotivoError.CredencialesNoValidas -> "Usuario o contraseña incorrectos."
-    MotivoError.SesionCaducada -> "La sesión ha caducado. Vuelve a entrar."
-    MotivoError.Desconocido -> "Ha ocurrido un error. Inténtalo de nuevo."
+@Composable
+private fun FilaDato(icono: ImageVector, etiqueta: String, valor: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icono, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        }
+        Spacer(Modifier.width(14.dp))
+        Column {
+            Text(etiqueta, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(valor, style = MaterialTheme.typography.bodyLarge)
+        }
+    }
 }

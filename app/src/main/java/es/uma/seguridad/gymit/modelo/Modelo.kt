@@ -79,6 +79,40 @@ data class Perfil(
     val rol: String = ""
 )
 
+/**
+ * El socio con la sesión abierta: lo que la app necesita para saludarle y
+ * generar su pase sin volver a preguntar al servidor.
+ */
+data class Socio(
+    val usuario: String,
+    val nombre: String,
+    val rol: String
+)
+
+/**
+ * El pase que se enseña en el torno.
+ *
+ * `contenido` es el texto que va dentro del QR. Cambia cada
+ * [VIGENCIA_PASE_SEGUNDOS] segundos, y `segundosRestantes` es lo que le queda
+ * al actual. Lo genera datos/GeneradorPase.kt.
+ */
+data class Pase(
+    val contenido: String,
+    val emitido: Long,
+    val segundosRestantes: Int
+)
+
+const val VIGENCIA_PASE_SEGUNDOS = 30
+
+/**
+ * El selfie del alta: dónde está el fichero y una versión que cambia cada vez
+ * que se sustituye, para que la interfaz sepa que tiene que volver a leerlo.
+ */
+data class Selfie(
+    val ruta: String,
+    val version: Long
+)
+
 /* --------------------------------------------------------------------------
    ESTADOS DE LA INTERFAZ
 

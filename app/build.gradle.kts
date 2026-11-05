@@ -56,6 +56,13 @@ dependencies {
     implementation(libs.kotlinx.serialization)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.navigation.compose)
+    implementation(libs.androidx.compose.material.icons.extended)
+    // Generación del código QR del pase
+    implementation(libs.zxing.core)
+    // Cámara frontal para el selfie del alta
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

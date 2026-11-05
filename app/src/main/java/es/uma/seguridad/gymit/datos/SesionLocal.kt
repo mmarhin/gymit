@@ -29,16 +29,18 @@ class SesionLocal(contexto: Context) {
         contexto.getSharedPreferences(NOMBRE_FICHERO, Context.MODE_PRIVATE)
 
     /**
-     * Guarda la sesión: dos cadenas, en claro, en un XML.
+     * Guarda la sesión: cuatro cadenas, en claro, en un XML.
      *
      * apply() escribe en memoria y vuelca a disco en segundo plano. La
      * alternativa, commit(), escribe de forma síncrona y devuelve si ha ido
      * bien; aquí no hace falta y bloquearía el hilo que llama.
      */
-    fun guardarSesion(token: String, usuario: String) {
+    fun guardarSesion(token: String, usuario: String, nombre: String, rol: String) {
         preferencias.edit()
             .putString(CLAVE_TOKEN, token)
             .putString(CLAVE_USUARIO, usuario)
+            .putString(CLAVE_NOMBRE, nombre)
+            .putString(CLAVE_ROL, rol)
             .apply()
     }
 
@@ -53,6 +55,11 @@ class SesionLocal(contexto: Context) {
 
     /** El usuario de la sesión, o null. Sirve para saber de quién son los datos locales. */
     fun obtenerUsuario(): String? = preferencias.getString(CLAVE_USUARIO, null)
+
+    /** Nombre completo y rol, para saludar al socio sin volver a preguntar al servidor. */
+    fun obtenerNombre(): String? = preferencias.getString(CLAVE_NOMBRE, null)
+
+    fun obtenerRol(): String? = preferencias.getString(CLAVE_ROL, null)
 
     /**
      * Borra los datos de sesión de ESTE fichero.
@@ -71,5 +78,7 @@ class SesionLocal(contexto: Context) {
         const val NOMBRE_FICHERO = "sesion"
         const val CLAVE_TOKEN = "token"
         const val CLAVE_USUARIO = "usuario"
+        const val CLAVE_NOMBRE = "nombre"
+        const val CLAVE_ROL = "rol"
     }
 }

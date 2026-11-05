@@ -4,9 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.uma.seguridad.gymit.datos.Repositorio
 import es.uma.seguridad.gymit.modelo.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
@@ -18,7 +22,8 @@ import kotlinx.coroutines.launch
  * descarga está en marcha, esa descarga se cancela: no termina después y
  * escribe datos de la sesión anterior.
  *
- * Está completo. En P2.2 sólo hay que leerlo.
+ * Además del estado de cada pantalla, guarda quién es el socio, su selfie y el
+ * pase vigente, que comparten varias pantallas.
  */
 class VistaModelo(private val repositorio: Repositorio) : ViewModel() {
 
@@ -31,10 +36,68 @@ class VistaModelo(private val repositorio: Repositorio) : ViewModel() {
     private val _estadoDetalle = MutableStateFlow<EstadoUi<Entrada>>(EstadoUi.Reposo)
     val estadoDetalle: StateFlow<EstadoUi<Entrada>> = _estadoDetalle.asStateFlow()
 
+    private val _estadoPerfil = MutableStateFlow<EstadoUi<Perfil>>(EstadoUi.Reposo)
+    val estadoPerfil: StateFlow<EstadoUi<Perfil>> = _estadoPerfil.asStateFlow()
+
+    private val _socio = MutableStateFlow(repositorio.socio())
+    val socio: StateFlow<Socio?> = _socio.asStateFlow()
+
+    private val _selfie = MutableStateFlow<Selfie?>(null)
+    val selfie: StateFlow<Selfie?> = _selfie.asStateFlow()
+
+    /** Pasa a true cuando ya se ha mirado en disco si hay selfie, para no anunciar el alta antes de saberlo. */
+    private val _selfieComprobado = MutableStateFlow(false)
+    val selfieComprobado: StateFlow<Boolean> = _selfieComprobado.asStateFlow()
+
+    /**
+     * El pase vigente, recalculado al empezar cada segundo para que la cuenta
+     * atrás avance y el QR cambie al acabar el periodo.
+     *
+     * WhileSubscribed hace que el reloj sólo corra mientras alguna pantalla lo
+     * está mirando: al salir de la pantalla del pase, se para a los cinco
+     * segundos y deja de generar códigos.
+     */
+    val pase: StateFlow<Pase?> = flow {
+        while (true) {
+            val ahora = System.currentTimeMillis()
+            emit(repositorio.paseActual(ahora))
+            delay(1000 - ahora % 1000)
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    init {
+        viewModelScope.launch {
+            _selfie.value = repositorio.obtenerSelfie()
+            _selfieComprobado.value = true
+        }
+    }
+
+    /** ¿Hay sesión guardada? Decide la pantalla con la que arranca la app. */
+    fun haySesion(): Boolean = repositorio.socio() != null
+
+    /** ¿Ha completado el socio el alta con selfie? */
+    suspend fun tieneSelfie(): Boolean = repositorio.obtenerSelfie() != null
+
+    fun guardarSelfie(jpeg: ByteArray) {
+        viewModelScope.launch { _selfie.value = repositorio.guardarSelfie(jpeg) }
+    }
+
+    fun cargarPerfil() {
+        viewModelScope.launch {
+            _estadoPerfil.value = EstadoUi.Cargando
+            _estadoPerfil.value = repositorio.obtenerPerfil()
+        }
+    }
+
     fun entrar(usuario: String, clave: String) {
         viewModelScope.launch {
             _estadoLogin.value = EstadoUi.Cargando
-            _estadoLogin.value = repositorio.iniciarSesion(usuario, clave)
+            val resultado = repositorio.iniciarSesion(usuario, clave)
+            if (resultado is EstadoUi.Exito) {
+                _socio.value = repositorio.socio()
+                _selfie.value = repositorio.obtenerSelfie()
+            }
+            _estadoLogin.value = resultado
         }
     }
 
@@ -55,7 +118,7 @@ class VistaModelo(private val repositorio: Repositorio) : ViewModel() {
     /**
      * Cierre de sesión.
      *
-     * Pide al repositorio que borre la sesión y devuelve las dos pantallas a
+     * Pide al repositorio que borre la sesión y devuelve todas las pantallas a
      * Reposo. Lo segundo no es decorativo: si el estado de acceso se quedara
      * en Exito, la navegación volvería a entrar sola en la lista.
      *
@@ -69,6 +132,9 @@ class VistaModelo(private val repositorio: Repositorio) : ViewModel() {
             _estadoLogin.value = EstadoUi.Reposo
             _estadoLista.value = EstadoUi.Reposo
             _estadoDetalle.value = EstadoUi.Reposo
+            _estadoPerfil.value = EstadoUi.Reposo
+            _socio.value = null
+            _selfie.value = null
         }
     }
 }

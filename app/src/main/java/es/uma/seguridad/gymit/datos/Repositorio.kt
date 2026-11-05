@@ -23,8 +23,40 @@ import java.io.IOException
 class Repositorio(
     private val api: ApiServicio,
     private val sesion: SesionLocal,
-    private val dao: EntradaDao
+    private val dao: EntradaDao,
+    private val selfies: AlmacenSelfie,
+    private val generadorPase: GeneradorPase = GeneradorPase()
 ) {
+
+    /** El socio con la sesión abierta, o null si no hay sesión. */
+    fun socio(): Socio? {
+        val usuario = sesion.obtenerUsuario() ?: return null
+        if (!sesion.haySesion()) return null
+        return Socio(
+            usuario = usuario,
+            nombre = sesion.obtenerNombre() ?: usuario,
+            rol = sesion.obtenerRol() ?: ""
+        )
+    }
+
+    /**
+     * El pase vigente del socio, o null si no hay sesión. No toca la red: el
+     * QR se genera en el móvil, que es lo que permite enseñarlo en el torno
+     * aunque no haya cobertura.
+     */
+    fun paseActual(ahoraMs: Long = System.currentTimeMillis()): Pase? {
+        val usuario = sesion.obtenerUsuario() ?: return null
+        return generadorPase.pase(usuario, ahoraMs)
+    }
+
+    /** El selfie del socio con la sesión abierta, si ya se lo ha hecho. */
+    suspend fun obtenerSelfie(): Selfie? = withContext(Dispatchers.IO) {
+        sesion.obtenerUsuario()?.let { selfies.obtener(it) }
+    }
+
+    suspend fun guardarSelfie(jpeg: ByteArray): Selfie? = withContext(Dispatchers.IO) {
+        sesion.obtenerUsuario()?.let { selfies.guardar(it, jpeg) }
+    }
 
     /**
      * Inicia sesión contra el backend y guarda el token si todo va bien.
@@ -55,7 +87,7 @@ class Repositorio(
                    ---------------------------------------------------------- */
                 Log.d("Repositorio", "Login correcto: $respuesta")
 
-                sesion.guardarSesion(respuesta.token, respuesta.usuario)
+                sesion.guardarSesion(respuesta.token, respuesta.usuario, respuesta.nombre, respuesta.rol)
                 EstadoUi.Exito(respuesta)
 
             } catch (e: HttpException) {
@@ -175,10 +207,12 @@ class Repositorio(
         withContext(Dispatchers.IO) {
             // P2.2 · 5.6: primero se averigua de quién son las filas locales y se
             // borran; la sesión se vacía la ÚLTIMA. Al revés, obtenerUsuario()
-            // devolvería null y no se borraría nada.
+            // devolvería null y no se borraría nada. El selfie es un sitio más
+            // donde quedan datos del usuario, así que también se borra.
             val propietario = sesion.obtenerUsuario()
             if (propietario != null) {
                 dao.borrarDe(propietario)
+                selfies.borrar(propietario)
             }
             sesion.cerrarSesion()
         }
