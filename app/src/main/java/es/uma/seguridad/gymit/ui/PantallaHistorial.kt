@@ -45,7 +45,9 @@ fun PantallaHistorial(
 
     // Mientras se recarga se sigue enseñando lo último que se cargó, en vez de vaciar la lista
     var ultimo by remember { mutableStateOf<Historial?>(null) }
-    if (estado is EstadoUi.Exito) ultimo = estado.datos
+    // Se apunta en un SideEffect, después de componer: escribir estado en mitad
+    // de la composición puede obligar a recomponer otra vez
+    SideEffect { if (estado is EstadoUi.Exito) ultimo = estado.datos }
     val visible = (estado as? EstadoUi.Exito)?.datos ?: ultimo.takeIf { estado is EstadoUi.Cargando }
 
     Column(Modifier.fillMaxSize()) {
@@ -123,7 +125,7 @@ private fun ListaEntradas(historial: Historial, onAbrir: (Int) -> Unit) {
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 20.dp)
     ) {
         if (historial.desdeCopiaLocal) {
-            item(key = "sin-conexion") { AvisoSinConexion(Modifier.padding(top = 8.dp, bottom = 4.dp)) }
+            item(key = "copia-local") { AvisoCopiaLocal(Modifier.padding(top = 8.dp, bottom = 4.dp)) }
         }
         porMes.forEach { (mes, entradas) ->
             stickyHeader(key = "mes-$mes") {
@@ -145,7 +147,7 @@ private fun ListaEntradas(historial: Historial, onAbrir: (Int) -> Unit) {
 }
 
 @Composable
-private fun AvisoSinConexion(modifier: Modifier = Modifier) {
+private fun AvisoCopiaLocal(modifier: Modifier = Modifier) {
     val colores = GymitTema.colores
     Row(
         modifier = modifier
@@ -158,7 +160,7 @@ private fun AvisoSinConexion(modifier: Modifier = Modifier) {
         Icon(Icons.Outlined.CloudOff, contentDescription = null, tint = colores.onAvisoContenedor)
         Spacer(Modifier.width(12.dp))
         Text(
-            "Sin conexión. Estas son tus últimas entradas guardadas.",
+            "No se ha podido actualizar. Estas son tus últimas entradas guardadas.",
             style = MaterialTheme.typography.bodyMedium,
             color = colores.onAvisoContenedor
         )

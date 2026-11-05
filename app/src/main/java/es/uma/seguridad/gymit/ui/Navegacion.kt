@@ -192,8 +192,16 @@ fun Navegacion(vistaModelo: VistaModelo) {
                     estado = estadoDetalle,
                     onCargar = { vistaModelo.cargarDetalle(it) },
                     onVolver = {
-                        // Si se llegó por el enlace profundo no hay pantalla anterior: se va al inicio
-                        if (!navController.popBackStack()) navController.navigate(inicio)
+                        /*
+                         * Se mira la sesión de ahora, no la del arranque: si se llegó por el
+                         * enlace profundo sin sesión (o tras cerrarla), volver lleva al acceso
+                         * y no al pase. Con sesión se vuelve atrás, o al pase si no hay atrás.
+                         */
+                        when {
+                            !vistaModelo.haySesion() ->
+                                navController.navigate(Rutas.LOGIN) { popUpTo(0) { inclusive = true } }
+                            !navController.popBackStack() -> navController.navigate(Rutas.PASE)
+                        }
                     }
                 )
             }

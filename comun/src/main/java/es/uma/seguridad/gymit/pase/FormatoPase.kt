@@ -37,8 +37,17 @@ object FormatoPase {
     private val USUARIO = Regex("^[a-z0-9._-]{1,32}$")
     private val NONCE = Regex("^[0-9a-f]{32}$")
 
-    fun componer(contenido: ContenidoPase): String =
-        "$PREFIJO:$VERSION:${contenido.usuario}:${contenido.emitido}:${contenido.nonce}"
+    /**
+     * El texto del QR para [contenido]. Exige las mismas reglas que [leer]: un
+     * pase que el torno no sabría leer es un error de programación, y es
+     * mejor que salte aquí que como «código no válido» delante del torno.
+     */
+    fun componer(contenido: ContenidoPase): String {
+        require(USUARIO.matches(contenido.usuario)) { "Usuario no válido para un pase: ${contenido.usuario}" }
+        require(NONCE.matches(contenido.nonce)) { "Nonce no válido para un pase" }
+        require(contenido.emitido > 0) { "Hora de emisión no válida para un pase" }
+        return "$PREFIJO:$VERSION:${contenido.usuario}:${contenido.emitido}:${contenido.nonce}"
+    }
 
     /**
      * Lee el texto de un QR. Devuelve null si no es un pase de Gymit bien

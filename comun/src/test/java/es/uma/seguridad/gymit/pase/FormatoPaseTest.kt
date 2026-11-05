@@ -2,6 +2,7 @@ package es.uma.seguridad.gymit.pase
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class FormatoPaseTest {
@@ -36,5 +37,16 @@ class FormatoPaseTest {
             "gymit:v1:ana:1793883630:xyz",                   // nonce que no es hexadecimal
             "gymit:v1:ana:1793883630:$nonce:extra"           // campos de más
         ).forEach { assertNull(it, FormatoPase.leer(it)) }
+    }
+
+    @Test
+    fun noComponeLoQueNoSabriaLeer() {
+        listOf(
+            ContenidoPase("Ana Ruiz", 1793883630, nonce),        // el torno lo rechazaría
+            ContenidoPase("ana", 1793883630, "xyz"),
+            ContenidoPase("ana", 0, nonce)
+        ).forEach { pase ->
+            assertThrows(IllegalArgumentException::class.java) { FormatoPase.componer(pase) }
+        }
     }
 }

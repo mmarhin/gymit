@@ -25,7 +25,7 @@ class RepositorioTorno(contexto: Context, private val api: ApiTorno = ClienteRed
 
     private val preferencias = contexto.getSharedPreferences("sesion_torno", Context.MODE_PRIVATE)
 
-    /** usuario -> nombre de todas las cuentas, cargado al entrar. */
+    /** usuario -> nombre de todas las cuentas, cargado al entrar (y de nuevo si entonces falló). */
     @Volatile
     var socios: Map<String, String> = emptyMap()
         private set
@@ -52,7 +52,9 @@ class RepositorioTorno(contexto: Context, private val api: ApiTorno = ClienteRed
                 .putString("token", respuesta.token)
                 .putString("nombre", respuesta.nombre)
                 .apply()
+            // Si la lista de socios no llega ahora, el torno la vuelve a pedir al leer un pase
             cargarSocios()
+            Resultado.Exito(Unit)
         } catch (e: HttpException) {
             Resultado.Error("Usuario o contraseña incorrectos.")
         } catch (e: IOException) {

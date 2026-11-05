@@ -29,6 +29,7 @@ import java.security.SecureRandom
 class GeneradorPase(private val aleatorio: SecureRandom = SecureRandom()) {
 
     private var periodoActual = -1L
+    private var usuarioActual = ""
     private var nonceActual = ""
 
     /**
@@ -40,8 +41,12 @@ class GeneradorPase(private val aleatorio: SecureRandom = SecureRandom()) {
     fun pase(usuario: String, ahoraMs: Long): Pase {
         val segundos = ahoraMs / 1000
         val periodo = segundos / VIGENCIA_PASE_SEGUNDOS
-        if (periodo != periodoActual) {
+        // Nonce nuevo en cada periodo y también si cambia el socio: si no, quien
+        // entra tras otro socio en el mismo periodo heredaría su nonce y el torno
+        // tomaría su pase por uno ya usado
+        if (periodo != periodoActual || usuario != usuarioActual) {
             periodoActual = periodo
+            usuarioActual = usuario
             nonceActual = nuevoNonce()
         }
         val emitido = periodo * VIGENCIA_PASE_SEGUNDOS

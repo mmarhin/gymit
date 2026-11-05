@@ -1,7 +1,6 @@
 package es.uma.seguridad.gymit.torno.ui
 
 import android.Manifest
-import android.app.Activity
 import android.view.HapticFeedbackConstants
 import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
@@ -71,6 +70,7 @@ import es.uma.seguridad.gymit.torno.datos.Resultado
 import es.uma.seguridad.gymit.torno.datos.Veredicto
 import es.uma.seguridad.gymit.ui.LogoGymit
 import es.uma.seguridad.gymit.ui.PantallaAccesoMarca
+import es.uma.seguridad.gymit.ui.buscarActividad
 import es.uma.seguridad.gymit.ui.marcoEscaneo
 import es.uma.seguridad.gymit.ui.theme.GymitTema
 import java.text.SimpleDateFormat
@@ -265,13 +265,17 @@ private fun VistaCamara(onLeido: (String) -> Unit, modifier: Modifier) {
     val vista = remember {
         PreviewView(contexto).apply { scaleType = PreviewView.ScaleType.FILL_CENTER }
     }
-    val hilo = remember { Executors.newSingleThreadExecutor() }
     val alLeer by rememberUpdatedState(onLeido)
 
     DisposableEffect(propietario) {
+        // Un hilo por efecto: si el efecto se repite, el nuevo no hereda uno ya apagado
+        val hilo = Executors.newSingleThreadExecutor()
         val futuro = ProcessCameraProvider.getInstance(contexto)
         var proveedor: ProcessCameraProvider? = null
+        var cerrado = false
         futuro.addListener({
+            // La cámara puede llegar cuando ya se ha salido de la pantalla
+            if (cerrado) return@addListener
             proveedor = futuro.get().also {
                 val previa = Preview.Builder().build().apply { setSurfaceProvider(vista.surfaceProvider) }
                 val analisis = ImageAnalysis.Builder()
@@ -283,6 +287,7 @@ private fun VistaCamara(onLeido: (String) -> Unit, modifier: Modifier) {
             }
         }, ContextCompat.getMainExecutor(contexto))
         onDispose {
+            cerrado = true
             proveedor?.unbindAll()
             hilo.shutdown()
         }
@@ -310,7 +315,7 @@ private fun PantallaVeredicto(lectura: Lectura, onCerrar: () -> Unit) {
      */
     DisposableEffect(lectura) {
         vista.performHapticFeedback(if (concedido) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.REJECT)
-        val ventana = (vista.context as? Activity)?.window
+        val ventana = vista.context.buscarActividad()?.window
         val control = ventana?.let { WindowCompat.getInsetsController(it, vista) }
         val anterior = control?.isAppearanceLightStatusBars
         control?.isAppearanceLightStatusBars = concedido

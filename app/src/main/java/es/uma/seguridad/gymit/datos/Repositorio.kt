@@ -117,8 +117,8 @@ class Repositorio(
 
     /**
      * Descarga las entradas del usuario, guarda una copia local y las devuelve.
-     * Si la red falla, devuelve la copia local en lugar de un error, marcada
-     * para que la pantalla avise de que puede no estar al día.
+     * Si la red o el servidor fallan, devuelve la copia local en lugar de un
+     * error, marcada para que la pantalla avise de que puede no estar al día.
      *
      * Si el servidor rechaza el token (401, por ejemplo porque se ha
      * reiniciado y ha olvidado las sesiones), devuelve SesionCaducada. No
@@ -156,13 +156,17 @@ class Repositorio(
                 EstadoUi.Exito(Historial(respuesta.entradas))
 
             } catch (e: HttpException) {
-                if (e.code() == 401) EstadoUi.Error(MotivoError.SesionCaducada) else copiaLocal(propietario)
+                // Un fallo del servidor no es falta de conexión: sin copia local se dice tal cual
+                if (e.code() == 401) EstadoUi.Error(MotivoError.SesionCaducada)
+                else copiaLocal(propietario, MotivoError.Desconocido)
+            } catch (e: IOException) {
+                copiaLocal(propietario, MotivoError.SinConexion)
             } catch (e: Exception) {
-                copiaLocal(propietario)
+                copiaLocal(propietario, MotivoError.Desconocido)
             }
         }
 
-    private suspend fun copiaLocal(propietario: String): EstadoUi<Historial> {
+    private suspend fun copiaLocal(propietario: String, motivo: MotivoError): EstadoUi<Historial> {
         /*
          * Si la red falla recurrimos a la copia local. Éste es el motivo por
          * el que existe la base de datos, y también el motivo por el que los
@@ -171,7 +175,7 @@ class Repositorio(
          */
         val copiaLocal = dao.obtenerDe(propietario)
         return if (copiaLocal.isEmpty()) {
-            EstadoUi.Error(MotivoError.SinConexion)
+            EstadoUi.Error(motivo)
         } else {
             EstadoUi.Exito(
                 Historial(

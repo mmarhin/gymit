@@ -1,8 +1,5 @@
 package es.uma.seguridad.gymit.ui
 
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -229,11 +226,4 @@ fun mensajeDeError(motivo: MotivoError): String = when (motivo) {
     MotivoError.CredencialesNoValidas -> "Usuario o contraseña incorrectos."
     MotivoError.SesionCaducada -> "La sesión ha caducado. Vuelve a entrar."
     MotivoError.Desconocido -> "Ha ocurrido un error. Inténtalo de nuevo."
-}
-
-/** La Activity que hay detrás de un Context de Compose, si la hay. */
-tailrec fun Context.buscarActividad(): Activity? = when (this) {
-    is Activity -> this
-    is ContextWrapper -> baseContext.buscarActividad()
-    else -> null
 }

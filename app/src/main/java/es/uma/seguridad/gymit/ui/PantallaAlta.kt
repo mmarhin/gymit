@@ -278,7 +278,10 @@ private fun Camara(onFoto: (Bitmap) -> Unit, onError: () -> Unit, onCerrar: () -
     DisposableEffect(propietario) {
         val futuro = ProcessCameraProvider.getInstance(contexto)
         var proveedor: ProcessCameraProvider? = null
+        var cerrado = false
         futuro.addListener({
+            // La cámara puede llegar cuando ya se ha salido de la pantalla
+            if (cerrado) return@addListener
             try {
                 proveedor = futuro.get().also {
                     val previa = Preview.Builder().build().apply { setSurfaceProvider(vista.surfaceProvider) }
@@ -289,7 +292,10 @@ private fun Camara(onFoto: (Bitmap) -> Unit, onError: () -> Unit, onCerrar: () -
                 onError()
             }
         }, ContextCompat.getMainExecutor(contexto))
-        onDispose { proveedor?.unbindAll() }
+        onDispose {
+            cerrado = true
+            proveedor?.unbindAll()
+        }
     }
 
     Box(

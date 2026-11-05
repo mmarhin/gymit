@@ -42,10 +42,11 @@ class VistaModeloTorno(private val repositorio: RepositorioTorno) : ViewModel() 
 
     private var ultimoTexto: String? = null
     private var ultimaVez = 0L
+    @Volatile private var validando = false
     private var ocultar: Job? = null
 
     init {
-        if (repositorio.haySesion()) cargarSocios()
+        if (repositorio.haySesion()) viewModelScope.launch { cargarSocios() }
     }
 
     fun entrar(usuario: String, clave: String) {
@@ -61,14 +62,16 @@ class VistaModeloTorno(private val repositorio: RepositorioTorno) : ViewModel() 
         }
     }
 
-    private fun cargarSocios() {
-        viewModelScope.launch {
-            val r = repositorio.cargarSocios()
-            if (r is Resultado.Error) {
-                _aviso.value = r.mensaje
-                if (!repositorio.haySesion()) _pantalla.value = Pantalla.Acceso
-            }
+    /** Pide la lista de socios; si falla, lo avisa y devuelve false. */
+    private suspend fun cargarSocios(): Boolean {
+        val r = repositorio.cargarSocios()
+        if (r is Resultado.Error) {
+            _aviso.value = r.mensaje
+            if (!repositorio.haySesion()) _pantalla.value = Pantalla.Acceso
+            return false
         }
+        _aviso.value = null
+        return true
     }
 
     /**
@@ -82,23 +85,33 @@ class VistaModeloTorno(private val repositorio: RepositorioTorno) : ViewModel() 
         val ahora = System.currentTimeMillis()
         if (_lectura.value != null) return
         if (texto == ultimoTexto && ahora - ultimaVez < IGNORAR_REPETIDO_MS) return
+        if (validando) return
         ultimoTexto = texto
         ultimaVez = ahora
+        validando = true
 
-        val veredicto = validador.validar(texto)
-        _lectura.value = Lectura(veredicto, ahora)
         viewModelScope.launch {
+            // Si la lista de socios no se pudo cargar (sin red al arrancar, servidor
+            // caído), se vuelve a pedir ahora: si no, todo pase saldría como socio
+            // desconocido hasta reiniciar la app
+            if (repositorio.socios.isEmpty() && !cargarSocios()) {
+                validando = false
+                return@launch
+            }
+            val veredicto = validador.validar(texto)
+            _lectura.value = Lectura(veredicto, ahora)
+            validando = false
+            ocultar?.cancel()
+            ocultar = viewModelScope.launch {
+                delay(VERDICTO_EN_PANTALLA_MS)
+                _lectura.value = null
+            }
             if (!repositorio.registrar(veredicto)) {
                 ocultar?.cancel()
                 _lectura.value = null
                 _acceso.value = EstadoAcceso(error = "La sesión del torno ha caducado. Vuelve a entrar.")
                 _pantalla.value = Pantalla.Acceso
             }
-        }
-        ocultar?.cancel()
-        ocultar = viewModelScope.launch {
-            delay(VERDICTO_EN_PANTALLA_MS)
-            _lectura.value = null
         }
     }
 
