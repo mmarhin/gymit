@@ -1,8 +1,5 @@
 package es.uma.seguridad.gymit.ui
 
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -320,10 +317,4 @@ private fun BrilloMaximo() {
             ventana.attributes = ventana.attributes.apply { screenBrightness = anterior }
         }
     }
-}
-
-private tailrec fun Context.buscarActividad(): Activity? = when (this) {
-    is Activity -> this
-    is ContextWrapper -> baseContext.buscarActividad()
-    else -> null
 }

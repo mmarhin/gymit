@@ -1,7 +1,6 @@
 package es.uma.seguridad.gymit.ui
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -91,14 +90,26 @@ fun PantallaAlta(
     var paso by remember { mutableStateOf(Paso.Explicacion) }
     var foto by remember { mutableStateOf<Bitmap?>(null) }
     var denegado by remember { mutableStateOf(false) }
+    var permanente by remember { mutableStateOf(false) }
     var errorCamara by remember { mutableStateOf(false) }
 
     val lanzador = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
         if (concedido) {
             denegado = false
+            permanente = false
             paso = Paso.Camara
         } else {
             denegado = true
+            /*
+             * Tras dos negativas Android deja de mostrar el diálogo y
+             * shouldShowRequestPermissionRationale pasa a false. Se mira AQUÍ,
+             * al recibir la respuesta: si se calculase al dibujar, la segunda
+             * negativa no cambiaría ningún estado (denegado ya era true), la
+             * pantalla no se redibujaría y el botón seguiría ofreciendo un
+             * diálogo que ya no va a salir.
+             */
+            permanente = contexto.buscarActividad()
+                ?.shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) == false
         }
     }
 
@@ -108,8 +119,7 @@ fun PantallaAlta(
                 nombre = nombre,
                 esAlta = esAlta,
                 denegado = denegado,
-                permanente = denegado && !(contexto as? Activity)
-                    ?.shouldShowRequestPermissionRationale(Manifest.permission.CAMERA).let { it == true },
+                permanente = permanente,
                 errorCamara = errorCamara,
                 onContinuar = {
                     errorCamara = false
